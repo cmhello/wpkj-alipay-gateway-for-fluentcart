@@ -1,0 +1,46 @@
+/**
+ * Alipay Admin Styles
+ */
+.wpkj-alipay-settings {
+    max-width: 800px;
+}
+
+.wpkj-alipay-notify-url {
+    background: #f5f5f5;
+    padding: 10px;
+    border-radius: 4px;
+    font-family: monospace;
+    word-break: break-all;
+}
+
+.copyable-content {
+    cursor: pointer;
+    user-select: all;
+}
+
+.copyable-content:hover {
+    background-color: #e0e0e0;
+}
+/**
+ * Alipay Admin Styles
+ */
+.wpkj-alipay-settings {
+    max-width: 800px;
+}
+
+.wpkj-alipay-notify-url {
+    background: #f5f5f5;
+    padding: 10px;
+    border-radius: 4px;
+    font-family: monospace;
+    word-break: break-all;
+}
+
+.copyable-content {
+    cursor: pointer;
+    user-select: all;
+}
+
+.copyable-content:hover {
+    background-color: #e0e0e0;
+}

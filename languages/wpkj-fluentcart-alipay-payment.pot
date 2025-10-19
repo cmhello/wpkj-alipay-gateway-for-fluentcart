@@ -1,0 +1,134 @@
+# Translation Template for WPKJ FluentCart Alipay Payment
+# Copyright (C) 2025 WPKJ Team
+# This file is distributed under the GPL v2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: WPKJ FluentCart Alipay Payment 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wpkj.com/support\n"
+"POT-Creation-Date: 2025-01-19 12:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: wpkj-fluentcart-alipay-payment.php
+msgid "WPKJ FluentCart Alipay Payment requires FluentCart to be installed and activated."
+msgstr ""
+
+#: wpkj-fluentcart-alipay-payment.php
+msgid "WPKJ FluentCart Alipay Payment requires FluentCart version 1.2.0 or higher."
+msgstr ""
+
+#: src/Gateway/AlipayGateway.php
+msgid "Pay securely with Alipay - Support PC, Mobile WAP, and In-App payments"
+msgstr ""
+
+#: src/Gateway/AlipayGateway.php
+msgid "Alipay does not support the currency you are using!"
+msgstr ""
+
+#: src/Gateway/AlipayGateway.php
+msgid "All credential fields are required!"
+msgstr ""
+
+#: src/Gateway/AlipayGateway.php
+msgid "Invalid App ID format. It should be 16 digits."
+msgstr ""
+
+#: src/Gateway/AlipayGateway.php
+msgid "Credentials validated successfully!"
+msgstr ""
+
+#: src/Processor/PaymentProcessor.php
+msgid "Redirecting to Alipay payment gateway..."
+msgstr ""
+
+#: src/Processor/PaymentProcessor.php
+msgid "Order from %s"
+msgstr ""
+
+#: src/Processor/PaymentProcessor.php
+msgid "Alipay Payment Confirmation"
+msgstr ""
+
+#: src/Processor/PaymentProcessor.php
+msgid "Payment confirmed from Alipay. Trade No: %s"
+msgstr ""
+
+#: src/Processor/PaymentProcessor.php
+msgid "Alipay Payment Failed"
+msgstr ""
+
+#: src/Processor/PaymentProcessor.php
+msgid "Payment failed. Reason: %s"
+msgstr ""
+# Translation Template for WPKJ FluentCart Alipay Payment
+# Copyright (C) 2025 WPKJ Team
+# This file is distributed under the GPL v2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: WPKJ FluentCart Alipay Payment 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wpkj.com/support\n"
+"POT-Creation-Date: 2025-01-19 12:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: wpkj-fluentcart-alipay-payment.php
+msgid "WPKJ FluentCart Alipay Payment requires FluentCart to be installed and activated."
+msgstr ""
+
+#: wpkj-fluentcart-alipay-payment.php
+msgid "WPKJ FluentCart Alipay Payment requires FluentCart version 1.2.0 or higher."
+msgstr ""
+
+#: src/Gateway/AlipayGateway.php
+msgid "Pay securely with Alipay - Support PC, Mobile WAP, and In-App payments"
+msgstr ""
+
+#: src/Gateway/AlipayGateway.php
+msgid "Alipay does not support the currency you are using!"
+msgstr ""
+
+#: src/Gateway/AlipayGateway.php
+msgid "All credential fields are required!"
+msgstr ""
+
+#: src/Gateway/AlipayGateway.php
+msgid "Invalid App ID format. It should be 16 digits."
+msgstr ""
+
+#: src/Gateway/AlipayGateway.php
+msgid "Credentials validated successfully!"
+msgstr ""
+
+#: src/Processor/PaymentProcessor.php
+msgid "Redirecting to Alipay payment gateway..."
+msgstr ""
+
+#: src/Processor/PaymentProcessor.php
+msgid "Order from %s"
+msgstr ""
+
+#: src/Processor/PaymentProcessor.php
+msgid "Alipay Payment Confirmation"
+msgstr ""
+
+#: src/Processor/PaymentProcessor.php
+msgid "Payment confirmed from Alipay. Trade No: %s"
+msgstr ""
+
+#: src/Processor/PaymentProcessor.php
+msgid "Alipay Payment Failed"
+msgstr ""
+
+#: src/Processor/PaymentProcessor.php
+msgid "Payment failed. Reason: %s"
+msgstr ""

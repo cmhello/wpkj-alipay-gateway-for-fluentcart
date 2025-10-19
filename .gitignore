@@ -1,0 +1,41 @@
+# Dependency directories
+node_modules/
+vendor/
+
+# Build files
+*.map
+*.min.js
+*.min.css
+dist/
+
+# WordPress
+wp-config.php
+.htaccess
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+error_log
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Environment files
+.env
+.env.local
+.env.*.local
