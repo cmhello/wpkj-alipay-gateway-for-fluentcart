@@ -156,9 +156,8 @@ class PaymentProcessor
         $subject = $this->buildSubject($order);
         $body = $this->buildBody($order);
 
-        // Get URLs
-        $paymentHelper = new PaymentHelper('alipay');
-        $returnUrl = $paymentHelper->successUrl($transaction->uuid);
+        // Get URLs (build manually to avoid HTML encoding)
+        $returnUrl = $this->getReturnUrl($transaction->uuid);
         $notifyUrl = $this->getNotifyUrl();
 
         return [
@@ -208,16 +207,42 @@ class PaymentProcessor
     }
 
     /**
+     * Get return URL
+     * 
+     * @param string $transactionUuid Transaction UUID
+     * @return string Return URL
+     */
+    private function getReturnUrl($transactionUuid)
+    {
+        // Get receipt page URL
+        $storeSettings = new \FluentCart\Api\StoreSettings();
+        $receiptPage = $storeSettings->getReceiptPage();
+        
+        // Build URL without HTML encoding
+        $params = http_build_query([
+            'method' => 'alipay',
+            'trx_hash' => $transactionUuid,
+            'fct_redirect' => 'yes'
+        ], '', '&', PHP_QUERY_RFC3986);
+        
+        return $receiptPage . (strpos($receiptPage, '?') !== false ? '&' : '?') . $params;
+    }
+
+    /**
      * Get notify URL
      * 
      * @return string Notify URL
      */
     private function getNotifyUrl()
     {
-        return add_query_arg([
+        // Build URL without HTML encoding to avoid signature verification issues
+        $baseUrl = trailingslashit(site_url());
+        $params = http_build_query([
             'fct_payment_listener' => '1',
             'method' => 'alipay'
-        ], site_url('/'));
+        ], '', '&', PHP_QUERY_RFC3986);
+        
+        return $baseUrl . '?' . $params;
     }
 
     /**

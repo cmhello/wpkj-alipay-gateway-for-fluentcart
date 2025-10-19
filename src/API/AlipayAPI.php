@@ -89,12 +89,13 @@ class AlipayAPI
                 $bizContent['timeout_express'] = $orderData['timeout_express'];
             }
 
-            // Build request parameters
-            $params = $this->buildRequestParams($bizContent, $method);
-            
-            // Add return URL and notify URL
-            $params['return_url'] = $orderData['return_url'];
-            $params['notify_url'] = $orderData['notify_url'];
+            // Build request parameters (include return_url and notify_url for signature)
+            $params = $this->buildRequestParams(
+                $bizContent, 
+                $method,
+                $orderData['return_url'],
+                $orderData['notify_url']
+            );
 
             // Generate payment form
             $paymentUrl = $this->generatePaymentUrl($params);
@@ -139,9 +140,11 @@ class AlipayAPI
      * 
      * @param array $bizContent Business content
      * @param string $method API method
+     * @param string $returnUrl Return URL (optional)
+     * @param string $notifyUrl Notify URL (optional)
      * @return array Request parameters
      */
-    private function buildRequestParams($bizContent, $method)
+    private function buildRequestParams($bizContent, $method, $returnUrl = '', $notifyUrl = '')
     {
         $params = [
             'app_id' => $this->config['app_id'],
@@ -152,8 +155,16 @@ class AlipayAPI
             'version' => '1.0',
             'biz_content' => json_encode($bizContent, JSON_UNESCAPED_UNICODE),
         ];
+        
+        // Add return_url and notify_url if provided (they must be included in signature)
+        if (!empty($returnUrl)) {
+            $params['return_url'] = $returnUrl;
+        }
+        if (!empty($notifyUrl)) {
+            $params['notify_url'] = $notifyUrl;
+        }
 
-        // Generate signature
+        // Generate signature (after all params are added)
         $params['sign'] = $this->generateSign($params);
 
         return $params;
@@ -182,17 +193,39 @@ class AlipayAPI
         }
         $signString = rtrim($signString, '&');
 
-        // Get private key
-        $privateKey = Helper::formatPrivateKey($this->config['private_key']);
+        // Get private key (already decrypted by AlipaySettingsBase)
+        $privateKeyContent = $this->config['private_key'];
+        
+        // Format private key with proper headers
+        $privateKey = Helper::formatPrivateKey($privateKeyContent);
+        
+        // Log for debugging (only in test mode)
+        if ($this->config['gateway_url'] === self::GATEWAY_URL_SANDBOX) {
+            Logger::info('Signature Generation Debug', [
+                'sign_string' => $signString,
+                'private_key_length' => strlen($privateKeyContent),
+                'private_key_first_10' => substr($privateKeyContent, 0, 10),
+                'formatted_key_length' => strlen($privateKey)
+            ]);
+        }
 
         // Generate signature
         $signature = '';
         $signType = $this->config['sign_type'];
 
         if ($signType === 'RSA2') {
-            openssl_sign($signString, $signature, $privateKey, OPENSSL_ALGO_SHA256);
+            $result = openssl_sign($signString, $signature, $privateKey, OPENSSL_ALGO_SHA256);
         } else {
-            openssl_sign($signString, $signature, $privateKey, OPENSSL_ALGO_SHA1);
+            $result = openssl_sign($signString, $signature, $privateKey, OPENSSL_ALGO_SHA1);
+        }
+        
+        if ($result === false) {
+            $opensslError = openssl_error_string();
+            Logger::error('OpenSSL Sign Failed', [
+                'openssl_error' => $opensslError,
+                'sign_type' => $signType
+            ]);
+            throw new \Exception('Failed to generate signature: ' . $opensslError);
         }
 
         return base64_encode($signature);
@@ -206,8 +239,22 @@ class AlipayAPI
      */
     private function generatePaymentUrl($params)
     {
-        $queryString = http_build_query($params);
-        return $this->config['gateway_url'] . '?' . $queryString;
+        // Use PHP_QUERY_RFC3986 to prevent HTML encoding
+        $queryString = http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+        $paymentUrl = $this->config['gateway_url'] . '?' . $queryString;
+        
+        // Log for debugging (only in test mode)
+        if ($this->config['gateway_url'] === self::GATEWAY_URL_SANDBOX) {
+            Logger::info('Payment URL Generated', [
+                'url_length' => strlen($paymentUrl),
+                'has_html_encoded_amp' => strpos($queryString, '&amp;') !== false ? 'YES (ERROR!)' : 'NO',
+                'has_html_encoded_quot' => strpos($queryString, '&quot;') !== false ? 'YES (ERROR!)' : 'NO',
+                'notify_url' => $params['notify_url'] ?? 'N/A',
+                'return_url' => $params['return_url'] ?? 'N/A'
+            ]);
+        }
+        
+        return $paymentUrl;
     }
 
     /**

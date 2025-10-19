@@ -2,7 +2,7 @@
 
 namespace WPKJFluentCart\Alipay\Gateway;
 
-use FluentCart\App\Helpers\Helper;
+use FluentCart\App\Helpers\Helper as FluentCartHelper;
 use FluentCart\App\Modules\PaymentMethods\Core\BaseGatewaySettings;
 use FluentCart\Framework\Support\Arr;
 use FluentCart\Api\StoreSettings;
@@ -212,7 +212,7 @@ class AlipaySettingsBase extends BaseGatewaySettings
                 throw new \Exception(__('Test private key is not configured', 'wpkj-fluentcart-alipay-payment'));
             }
             
-            $decrypted = Helper::decryptKey($encryptedKey);
+            $decrypted = FluentCartHelper::decryptKey($encryptedKey);
             if ($decrypted === false || empty($decrypted)) {
                 \WPKJFluentCart\Alipay\Utils\Logger::error('Private Key Decryption Failed', [
                     'mode' => 'test',
@@ -233,7 +233,7 @@ class AlipaySettingsBase extends BaseGatewaySettings
             throw new \Exception(__('Live private key is not configured', 'wpkj-fluentcart-alipay-payment'));
         }
         
-        $decrypted = Helper::decryptKey($encryptedKey);
+        $decrypted = FluentCartHelper::decryptKey($encryptedKey);
         if ($decrypted === false || empty($decrypted)) {
             \WPKJFluentCart\Alipay\Utils\Logger::error('Private Key Decryption Failed', [
                 'mode' => 'live',
