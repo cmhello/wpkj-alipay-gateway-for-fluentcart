@@ -175,21 +175,21 @@ class AlipayGateway extends AbstractPaymentGateway
                                 'label' => __('App ID', 'wpkj-fluentcart-alipay-payment'),
                                 'placeholder' => '2021xxxxxxxxxxxx',
                                 'required' => true,
-                                'help' => __('Your Alipay application ID', 'wpkj-fluentcart-alipay-payment')
+                                'help' => __('Your Alipay application ID (16 digits)', 'wpkj-fluentcart-alipay-payment')
                             ],
                             'live_private_key' => [
-                                'type' => 'textarea',
+                                'type' => 'password',
                                 'label' => __('Application Private Key', 'wpkj-fluentcart-alipay-payment'),
                                 'placeholder' => 'MIIEvQIBADANBgkqhkiG9w0B...',
                                 'required' => true,
-                                'help' => __('Your application RSA private key', 'wpkj-fluentcart-alipay-payment')
+                                'help' => __('Your application RSA2 private key (paste without header/footer)', 'wpkj-fluentcart-alipay-payment')
                             ],
                             'live_alipay_public_key' => [
-                                'type' => 'textarea',
+                                'type' => 'password',
                                 'label' => __('Alipay Public Key', 'wpkj-fluentcart-alipay-payment'),
                                 'placeholder' => 'MIIBIjANBgkqhkiG9w0B...',
                                 'required' => true,
-                                'help' => __('Alipay RSA public key', 'wpkj-fluentcart-alipay-payment')
+                                'help' => __('Alipay RSA2 public key (paste without header/footer)', 'wpkj-fluentcart-alipay-payment')
                             ]
                         ]
                     ],
@@ -203,21 +203,21 @@ class AlipayGateway extends AbstractPaymentGateway
                                 'label' => __('App ID', 'wpkj-fluentcart-alipay-payment'),
                                 'placeholder' => '2021xxxxxxxxxxxx',
                                 'required' => true,
-                                'help' => __('Your Alipay sandbox application ID', 'wpkj-fluentcart-alipay-payment')
+                                'help' => __('Your Alipay sandbox application ID (16 digits)', 'wpkj-fluentcart-alipay-payment')
                             ],
                             'test_private_key' => [
-                                'type' => 'textarea',
+                                'type' => 'password',
                                 'label' => __('Application Private Key', 'wpkj-fluentcart-alipay-payment'),
                                 'placeholder' => 'MIIEvQIBADANBgkqhkiG9w0B...',
                                 'required' => true,
-                                'help' => __('Your application RSA private key (sandbox)', 'wpkj-fluentcart-alipay-payment')
+                                'help' => __('Your application RSA2 private key for sandbox (paste without header/footer)', 'wpkj-fluentcart-alipay-payment')
                             ],
                             'test_alipay_public_key' => [
-                                'type' => 'textarea',
+                                'type' => 'password',
                                 'label' => __('Alipay Public Key', 'wpkj-fluentcart-alipay-payment'),
                                 'placeholder' => 'MIIBIjANBgkqhkiG9w0B...',
                                 'required' => true,
-                                'help' => __('Alipay RSA public key (sandbox)', 'wpkj-fluentcart-alipay-payment')
+                                'help' => __('Alipay RSA2 public key for sandbox (paste without header/footer)', 'wpkj-fluentcart-alipay-payment')
                             ]
                         ]
                     ]
@@ -280,9 +280,21 @@ class AlipayGateway extends AbstractPaymentGateway
      */
     public static function beforeSettingsUpdate($data, $oldSettings): array
     {
-        $mode = Arr::get($data, 'payment_mode', 'test');
+        // Clean up display-only fields
+        $fieldsToRemove = [
+            'notice',
+            'notify_url_info',
+        ];
+        
+        foreach ($fieldsToRemove as $field) {
+            if (isset($data[$field])) {
+                unset($data[$field]);
+            }
+        }
 
-        // Encrypt private key
+        // Encrypt private keys using FluentCart's default encryption
+        $mode = Arr::get($data, 'payment_mode', 'test');
+        
         if (!empty($data["{$mode}_private_key"])) {
             $data["{$mode}_private_key"] = FluentCartHelper::encryptKey($data["{$mode}_private_key"]);
         }

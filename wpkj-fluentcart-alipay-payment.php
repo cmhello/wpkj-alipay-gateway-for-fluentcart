@@ -1,13 +1,13 @@
 <?php
 /**
  * Plugin Name: WPKJ FluentCart Alipay Payment
- * Plugin URI: https://wpkj.com/fluentcart-alipay
+ * Plugin URI: https://www.wpdaxue.com/fluentcart-alipay
  * Description: Alipay payment gateway integration for FluentCart - Support PC Web, Mobile WAP, and In-App payments
  * Version: 1.0.0
- * Requires at least: 6.0
+ * Requires at least: 6.5
  * Requires PHP: 8.2
  * Author: WPKJ Team
- * Author URI: https://wpkj.com
+ * Author URI: https://www.wpdaxue.com
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: wpkj-fluentcart-alipay-payment
@@ -94,14 +94,18 @@ function wpkj_fc_alipay_bootstrap() {
     }
     
     // Register the Alipay gateway with FluentCart
-    add_action('fluent_cart/register_payment_methods', function($args) {
-        $gatewayManager = $args['gatewayManager'];
-        
-        $alipayGateway = new \WPKJFluentCart\Alipay\Gateway\AlipayGateway();
-        
-        $gatewayManager->register('alipay', $alipayGateway);
-        
-    }, 10, 1);
+    // Must use 'init' hook because FluentCart registers gateways in 'init'
+    add_action('init', function() {
+        // Wait for FluentCart to trigger the registration hook
+        add_action('fluent_cart/register_payment_methods', function($args) {
+            $gatewayManager = $args['gatewayManager'];
+            
+            $alipayGateway = new \WPKJFluentCart\Alipay\Gateway\AlipayGateway();
+            
+            $gatewayManager->register('alipay', $alipayGateway);
+            
+        }, 10, 1);
+    }, 9); // Priority 9 to run before FluentCart's init at priority 10
 }
 add_action('plugins_loaded', 'wpkj_fc_alipay_bootstrap', 20);
 
