@@ -214,18 +214,23 @@ class PaymentProcessor
      */
     private function getReturnUrl($transactionUuid)
     {
-        // Get receipt page URL
+        // CRITICAL FIX: Do NOT include 'method' parameter!
+        // Alipay will add its own method=alipay.trade.page.pay.return
+        // Having two 'method' parameters causes "suspected-attack" error
+        
         $storeSettings = new \FluentCart\Api\StoreSettings();
         $receiptPage = $storeSettings->getReceiptPage();
         
-        // Build URL without HTML encoding
-        $params = http_build_query([
-            'method' => 'alipay',
+        // If receipt page not configured, use FluentCart routing
+        if (empty($receiptPage)) {
+            $receiptPage = home_url('/?fluent-cart=receipt');
+        }
+        
+        // Only use unique identifiers that won't conflict with Alipay's parameters
+        return add_query_arg([
             'trx_hash' => $transactionUuid,
             'fct_redirect' => 'yes'
-        ], '', '&', PHP_QUERY_RFC3986);
-        
-        return $receiptPage . (strpos($receiptPage, '?') !== false ? '&' : '?') . $params;
+        ], $receiptPage);
     }
 
     /**
@@ -235,11 +240,13 @@ class PaymentProcessor
      */
     private function getNotifyUrl()
     {
-        // Build URL without HTML encoding to avoid signature verification issues
+        // CRITICAL: Do NOT include 'method' parameter in notify_url!
+        // FluentCart uses fct_payment_listener to route IPN requests
+        // The 'method' will be extracted from POST data, not URL
+        
         $baseUrl = trailingslashit(site_url());
         $params = http_build_query([
-            'fct_payment_listener' => '1',
-            'method' => 'alipay'
+            'fct_payment_listener' => '1'
         ], '', '&', PHP_QUERY_RFC3986);
         
         return $baseUrl . '?' . $params;
@@ -272,14 +279,23 @@ class PaymentProcessor
             return;
         }
 
-        // Verify payment amount with strict comparison
+        // Verify payment amount
         $totalAmount = Helper::toCents($alipayData['total_amount']);
-        if ($totalAmount !== $transaction->total) {
+        
+        // Convert both to integers for comparison to avoid type mismatch
+        $expectedAmount = (int)$transaction->total;
+        $receivedAmount = (int)$totalAmount;
+        
+        if ($expectedAmount !== $receivedAmount) {
             Logger::error('Amount Mismatch', [
-                'expected' => $transaction->total,
-                'received' => $totalAmount,
-                'difference' => abs($totalAmount - $transaction->total),
-                'transaction_uuid' => $transaction->uuid
+                'expected' => $expectedAmount,
+                'received' => $receivedAmount,
+                'expected_type' => gettype($transaction->total),
+                'received_type' => gettype($totalAmount),
+                'difference' => abs($expectedAmount - $receivedAmount),
+                'transaction_uuid' => $transaction->uuid,
+                'original_expected' => $transaction->total,
+                'original_received' => $totalAmount
             ]);
             return;
         }

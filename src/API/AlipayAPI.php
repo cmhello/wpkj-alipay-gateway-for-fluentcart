@@ -474,4 +474,114 @@ class AlipayAPI
             return new \WP_Error('alipay_refund_error', $e->getMessage());
         }
     }
+
+    /**
+     * Query trade status
+     * 
+     * @param string $outTradeNo Out trade number
+     * @return array|\WP_Error Trade data or error
+     */
+    public function queryTrade($outTradeNo)
+    {
+        try {
+            $bizContent = [
+                'out_trade_no' => $outTradeNo,
+            ];
+
+            $params = $this->buildRequestParams($bizContent, 'alipay.trade.query');
+
+            $response = wp_remote_post($this->config['gateway_url'], [
+                'body' => $params,
+                'timeout' => 15,
+            ]);
+
+            if (is_wp_error($response)) {
+                return $response;
+            }
+
+            // Check HTTP status code
+            $httpCode = wp_remote_retrieve_response_code($response);
+            if ($httpCode !== 200) {
+                Logger::error('HTTP Request Failed', [
+                    'http_code' => $httpCode,
+                    'method' => 'query',
+                    'out_trade_no' => $outTradeNo
+                ]);
+                return new \WP_Error(
+                    'alipay_http_error',
+                    sprintf(__('HTTP %d error from Alipay', 'wpkj-fluentcart-alipay-payment'), $httpCode)
+                );
+            }
+
+            $body = wp_remote_retrieve_body($response);
+            
+            if (empty($body)) {
+                return new \WP_Error('alipay_query_error', __('Empty response from Alipay', 'wpkj-fluentcart-alipay-payment'));
+            }
+
+            $result = json_decode($body, true);
+            $jsonError = json_last_error();
+
+            if ($jsonError !== JSON_ERROR_NONE) {
+                Logger::error('JSON Decode Error', [
+                    'error' => json_last_error_msg(),
+                    'error_code' => $jsonError
+                ]);
+                return new \WP_Error(
+                    'alipay_query_error',
+                    __('Invalid JSON response from Alipay', 'wpkj-fluentcart-alipay-payment')
+                );
+            }
+
+            // Extract response data
+            $responseKey = 'alipay_trade_query_response';
+            if (!isset($result[$responseKey])) {
+                Logger::error('Missing Response Key', [
+                    'out_trade_no' => $outTradeNo,
+                    'keys' => array_keys($result)
+                ]);
+                return new \WP_Error(
+                    'alipay_query_error',
+                    __('Invalid response structure from Alipay', 'wpkj-fluentcart-alipay-payment')
+                );
+            }
+
+            $tradeData = $result[$responseKey];
+
+            // Check for errors
+            if (isset($tradeData['code']) && $tradeData['code'] !== '10000') {
+                $errorMsg = $tradeData['sub_msg'] ?? $tradeData['msg'] ?? 'Unknown error';
+                
+                // Trade not found is not an error, just means payment not completed yet
+                if ($tradeData['code'] === 'ACQ.TRADE_NOT_EXIST') {
+                    Logger::info('Trade Not Exist (Payment Pending)', [
+                        'out_trade_no' => $outTradeNo
+                    ]);
+                    return [
+                        'trade_status' => 'WAIT_BUYER_PAY',
+                        'msg' => 'Trade not found, payment may still be pending'
+                    ];
+                }
+                
+                Logger::error('Query Trade Failed', [
+                    'out_trade_no' => $outTradeNo,
+                    'code' => $tradeData['code'],
+                    'message' => $errorMsg
+                ]);
+                
+                return new \WP_Error('alipay_query_error', $errorMsg);
+            }
+
+            Logger::info('Query Trade Success', [
+                'out_trade_no' => $outTradeNo,
+                'trade_status' => $tradeData['trade_status'] ?? 'unknown'
+            ]);
+
+            return $tradeData;
+
+        } catch (\Exception $e) {
+            Logger::error('Query Trade Error', $e->getMessage());
+            return new \WP_Error('alipay_query_error', $e->getMessage());
+        }
+    }
 }
