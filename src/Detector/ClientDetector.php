@@ -2,6 +2,8 @@
 
 namespace WPKJFluentCart\Alipay\Detector;
 
+use WPKJFluentCart\Alipay\Gateway\AlipaySettingsBase;
+
 /**
  * Client Detector
  * 
@@ -46,21 +48,23 @@ class ClientDetector
     /**
      * Get appropriate payment method based on client environment
      * 
-     * @return string alipay.trade.page.pay|alipay.trade.wap.pay|alipay.trade.app.pay
+     * @param AlipaySettingsBase|null $settings Settings instance (optional)
+     * @return string alipay.trade.page.pay|alipay.trade.wap.pay|alipay.trade.app.pay|alipay.trade.precreate
      */
-    public static function getPaymentMethod(): string
+    public static function getPaymentMethod($settings = null): string
     {
-        // If in Alipay client, use app payment
         if (self::isAlipayClient()) {
             return 'alipay.trade.app.pay';
         }
         
-        // If mobile browser, use WAP payment
         if (self::isMobile()) {
             return 'alipay.trade.wap.pay';
         }
         
-        // Desktop browser, use page payment
+        if ($settings && $settings->get('enable_face_to_face_pc') === 'yes') {
+            return 'alipay.trade.precreate';
+        }
+        
         return 'alipay.trade.page.pay';
     }
 

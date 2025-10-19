@@ -73,9 +73,8 @@ class AlipayAPI
     public function createPayment($orderData)
     {
         try {
-            $method = ClientDetector::getPaymentMethod();
+            $method = ClientDetector::getPaymentMethod($this->settings);
             
-            // Build business parameters
             $bizContent = [
                 'out_trade_no' => $orderData['out_trade_no'],
                 'total_amount' => $orderData['total_amount'],
@@ -84,12 +83,10 @@ class AlipayAPI
                 'product_code' => $this->getProductCode($method),
             ];
 
-            // Add optional parameters
             if (!empty($orderData['timeout_express'])) {
                 $bizContent['timeout_express'] = $orderData['timeout_express'];
             }
 
-            // Build request parameters (include return_url and notify_url for signature)
             $params = $this->buildRequestParams(
                 $bizContent, 
                 $method,
@@ -97,7 +94,6 @@ class AlipayAPI
                 $orderData['notify_url']
             );
 
-            // Generate payment form
             $paymentUrl = $this->generatePaymentUrl($params);
 
             Logger::info('Payment Created', [
@@ -115,6 +111,133 @@ class AlipayAPI
         } catch (\Exception $e) {
             Logger::error('Create Payment Error', $e->getMessage());
             return new \WP_Error('alipay_create_error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Create Face-to-Face payment (QR code)
+     * 
+     * @param array $orderData Order data
+     * @return array|\WP_Error QR code data or error
+     */
+    public function createFaceToFacePayment($orderData)
+    {
+        try {
+            $bizContent = [
+                'out_trade_no' => $orderData['out_trade_no'],
+                'total_amount' => $orderData['total_amount'],
+                'subject' => $orderData['subject'],
+            ];
+
+            if (!empty($orderData['body'])) {
+                $bizContent['body'] = $orderData['body'];
+            }
+
+            if (!empty($orderData['timeout_express'])) {
+                $bizContent['timeout_express'] = $orderData['timeout_express'];
+            }
+
+            $params = $this->buildRequestParams(
+                $bizContent,
+                'alipay.trade.precreate',
+                '',
+                $orderData['notify_url']
+            );
+
+            $response = wp_remote_post($this->config['gateway_url'], [
+                'body' => $params,
+                'timeout' => 30,
+            ]);
+
+            if (is_wp_error($response)) {
+                return $response;
+            }
+
+            $httpCode = wp_remote_retrieve_response_code($response);
+            if ($httpCode !== 200) {
+                Logger::error('HTTP Request Failed', [
+                    'http_code' => $httpCode,
+                    'method' => 'precreate',
+                    'out_trade_no' => $orderData['out_trade_no']
+                ]);
+                return new \WP_Error(
+                    'alipay_http_error',
+                    sprintf(__('HTTP %d error from Alipay', 'wpkj-fluentcart-alipay-payment'), $httpCode)
+                );
+            }
+
+            $body = wp_remote_retrieve_body($response);
+            
+            if (empty($body)) {
+                return new \WP_Error('alipay_precreate_error', __('Empty response from Alipay', 'wpkj-fluentcart-alipay-payment'));
+            }
+
+            $result = json_decode($body, true);
+            $jsonError = json_last_error();
+
+            if ($jsonError !== JSON_ERROR_NONE) {
+                Logger::error('JSON Decode Error', [
+                    'error' => json_last_error_msg(),
+                    'error_code' => $jsonError,
+                    'body_preview' => substr($body, 0, 500)
+                ]);
+                return new \WP_Error(
+                    'alipay_precreate_error',
+                    __('Invalid JSON response from Alipay', 'wpkj-fluentcart-alipay-payment')
+                );
+            }
+
+            $responseKey = 'alipay_trade_precreate_response';
+            if (!isset($result[$responseKey])) {
+                Logger::error('Invalid Precreate Response Structure', [
+                    'out_trade_no' => $orderData['out_trade_no'],
+                    'response_keys' => array_keys($result)
+                ]);
+                return new \WP_Error(
+                    'alipay_precreate_error',
+                    __('Invalid response structure from Alipay', 'wpkj-fluentcart-alipay-payment')
+                );
+            }
+
+            $precreateResponse = $result[$responseKey];
+
+            if (!isset($precreateResponse['code']) || $precreateResponse['code'] !== '10000') {
+                $errorMsg = $precreateResponse['sub_msg'] ?? $precreateResponse['msg'] ?? __('Face-to-Face payment creation failed', 'wpkj-fluentcart-alipay-payment');
+                
+                Logger::error('Precreate Failed', [
+                    'out_trade_no' => $orderData['out_trade_no'],
+                    'code' => $precreateResponse['code'] ?? 'unknown',
+                    'message' => $errorMsg,
+                    'sub_code' => $precreateResponse['sub_code'] ?? ''
+                ]);
+                
+                return new \WP_Error('alipay_precreate_error', $errorMsg);
+            }
+
+            if (empty($precreateResponse['qr_code'])) {
+                Logger::error('Missing QR Code in Response', [
+                    'out_trade_no' => $orderData['out_trade_no']
+                ]);
+                return new \WP_Error(
+                    'alipay_precreate_error',
+                    __('QR code not found in response', 'wpkj-fluentcart-alipay-payment')
+                );
+            }
+
+            Logger::info('Face-to-Face Payment Created', [
+                'out_trade_no' => $orderData['out_trade_no'],
+                'amount' => $orderData['total_amount']
+            ]);
+
+            return [
+                'qr_code' => $precreateResponse['qr_code'],
+                'out_trade_no' => $orderData['out_trade_no'],
+                'method' => 'alipay.trade.precreate'
+            ];
+
+        } catch (\Exception $e) {
+            Logger::error('Create Face-to-Face Payment Error', $e->getMessage());
+            return new \WP_Error('alipay_precreate_error', $e->getMessage());
         }
     }
 

@@ -10,6 +10,7 @@ use FluentCart\App\Services\Payments\PaymentInstance;
 use FluentCart\App\Services\Payments\PaymentHelper;
 use WPKJFluentCart\Alipay\API\AlipayAPI;
 use WPKJFluentCart\Alipay\Gateway\AlipaySettingsBase;
+use WPKJFluentCart\Alipay\Detector\ClientDetector;
 use WPKJFluentCart\Alipay\Utils\Helper;
 use WPKJFluentCart\Alipay\Utils\Logger;
 use FluentCart\Framework\Support\Arr;
@@ -58,14 +59,12 @@ class PaymentProcessor
         $order = $paymentInstance->order;
 
         try {
-            // Validate transaction status - prevent duplicate payment
             if ($transaction->status === Status::TRANSACTION_SUCCEEDED) {
                 throw new \Exception(
                     __('Transaction has already been completed.', 'wpkj-fluentcart-alipay-payment')
                 );
             }
 
-            // Validate order status
             if (in_array($order->status, ['completed', 'processing'])) {
                 Logger::warning('Payment Attempt on Completed Order', [
                     'order_uuid' => $order->uuid,
@@ -74,10 +73,14 @@ class PaymentProcessor
                 ]);
             }
 
-            // Build payment data
             $paymentData = $this->buildPaymentData($paymentInstance);
 
-            // Create payment via API
+            $paymentMethod = ClientDetector::getPaymentMethod($this->settings);
+
+            if ($paymentMethod === 'alipay.trade.precreate') {
+                return $this->processFaceToFacePayment($paymentInstance, $paymentData);
+            }
+
             $result = $this->api->createPayment($paymentData);
 
             if (is_wp_error($result)) {
@@ -109,6 +112,69 @@ class PaymentProcessor
 
         } catch (\Exception $e) {
             Logger::error('Payment Processing Error', [
+                'message' => $e->getMessage(),
+                'order_id' => $order->id,
+                'transaction_id' => $transaction->id
+            ]);
+
+            return [
+                'status' => 'failed',
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Process Face-to-Face payment (QR code)
+     * 
+     * @param PaymentInstance $paymentInstance Payment instance
+     * @param array $paymentData Payment data
+     * @return array Payment response
+     */
+    private function processFaceToFacePayment(PaymentInstance $paymentInstance, array $paymentData)
+    {
+        $transaction = $paymentInstance->transaction;
+        $order = $paymentInstance->order;
+
+        try {
+            $result = $this->api->createFaceToFacePayment($paymentData);
+
+            if (is_wp_error($result)) {
+                throw new \Exception($result->get_error_message());
+            }
+
+            $transaction->meta = array_merge($transaction->meta ?? [], [
+                'qr_code' => $result['qr_code'],
+                'payment_method_type' => 'face_to_face'
+            ]);
+            $transaction->save();
+
+            Logger::info('Face-to-Face Payment Initiated', [
+                'order_uuid' => $order->uuid,
+                'transaction_uuid' => $transaction->uuid,
+                'amount' => $paymentData['total_amount']
+            ]);
+
+            return [
+                'status' => 'success',
+                'nextAction' => 'qrcode',
+                'actionName' => 'qrcode',
+                'message' => __('Please scan the QR code with Alipay app to complete payment', 'wpkj-fluentcart-alipay-payment'),
+                'data' => [
+                    'order' => [
+                        'uuid' => $order->uuid,
+                    ],
+                    'transaction' => [
+                        'uuid' => $transaction->uuid,
+                    ],
+                    'qr_code' => $result['qr_code'],
+                    'payment_method' => 'face_to_face'
+                ],
+                'custom_payment_url' => PaymentHelper::getCustomPaymentLink($order->uuid)
+            ];
+
+        } catch (\Exception $e) {
+            Logger::error('Face-to-Face Payment Error', [
                 'message' => $e->getMessage(),
                 'order_id' => $order->id,
                 'transaction_id' => $transaction->id

@@ -2,6 +2,65 @@
 
 All notable changes to WPKJ FluentCart Alipay Payment will be documented in this file.
 
+## [1.0.3] - 2025-10-20
+
+### ✨ New Features
+- **Face-to-Face Payment Support** - Added QR code scan payment for PC/Desktop users
+  - New payment method: `alipay.trade.precreate` (Face-to-Face)
+  - Automatic QR code generation and display
+  - Real-time payment status polling (3s interval, max 10 minutes)
+  - Graceful timeout handling with user feedback
+  - Fully compatible with existing payment methods (WAP, APP)
+
+### 🌐 Internationalization
+- **JavaScript Localization** - All JavaScript strings now support i18n
+  - Scan QR code title
+  - Waiting for payment message
+  - Payment success/failed/timeout messages
+  - Localized strings passed via `wp_localize_script()`
+  - Ready for translation into any language
+
+### ⚙️ Configuration
+- **New Admin Setting** - "PC Face-to-Face Payment" option
+  - Enable/disable QR code payment for desktop users
+  - Default: Disabled (uses traditional page redirect)
+  - When enabled: PC users see QR code instead of redirect
+  - Mobile users always use WAP payment (unchanged)
+
+### 🎨 User Interface
+- **QR Code Display** - Professional payment UI
+  - Responsive design (works on all screen sizes)
+  - Loading animation while generating QR code
+  - Real-time status updates (waiting/success/failed)
+  - Auto-redirect on successful payment
+  - Supports QRCode.js library or Google Charts API fallback
+
+### 🔧 Technical Improvements
+- **New Classes**:
+  - `PaymentStatusChecker` - AJAX handler for status polling
+  - Enhanced `ClientDetector` - Supports settings-based method selection
+  - Enhanced `AlipayAPI` - New `createFaceToFacePayment()` method
+  - Enhanced `PaymentProcessor` - Routes to F2F or traditional payment
+
+- **New Files**:
+  - `assets/js/face-to-face-payment.js` - Frontend payment handler
+  - `assets/css/face-to-face-payment.css` - Payment UI styles
+  - `src/Processor/PaymentStatusChecker.php` - Status polling API
+
+### 🧹 Code Quality
+- Removed all Chinese strings from JavaScript files
+- Added proper i18n support for all user-facing text
+- Cleaned up test and debug files
+- Improved code documentation and comments
+
+### 🔄 Compatibility
+- Fully backward compatible with v1.0.2
+- Works with existing auto-refund feature
+- Compatible with all FluentCart payment flows
+- No breaking changes
+
+---
+
 ## [1.0.1] - 2025-10-19
 
 ### 🔒 Security Fixes

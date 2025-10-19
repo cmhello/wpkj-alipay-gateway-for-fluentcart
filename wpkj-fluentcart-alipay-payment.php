@@ -2,8 +2,8 @@
 /**
  * Plugin Name: WPKJ FluentCart Alipay Payment
  * Plugin URI: https://www.wpdaxue.com/fluentcart-alipay
- * Description: Alipay payment gateway integration for FluentCart - Support PC Web, Mobile WAP, and In-App payments
- * Version: 1.0.2
+ * Description: Alipay payment gateway integration for FluentCart - Support PC Web, Mobile WAP, Face-to-Face, and In-App payments
+ * Version: 1.0.3
  * Requires at least: 6.5
  * Requires PHP: 8.2
  * Author: WPKJ Team
@@ -16,8 +16,7 @@
 
 defined('ABSPATH') || exit;
 
-// Define plugin constants
-define('WPKJ_FC_ALIPAY_VERSION', '1.0.2');
+define('WPKJ_FC_ALIPAY_VERSION', '1.0.3');
 define('WPKJ_FC_ALIPAY_FILE', __FILE__);
 define('WPKJ_FC_ALIPAY_PATH', plugin_dir_path(__FILE__));
 define('WPKJ_FC_ALIPAY_URL', plugin_dir_url(__FILE__));
@@ -93,10 +92,7 @@ function wpkj_fc_alipay_bootstrap() {
         return;
     }
     
-    // Register the Alipay gateway with FluentCart
-    // Must use 'init' hook because FluentCart registers gateways in 'init'
     add_action('init', function() {
-        // Wait for FluentCart to trigger the registration hook
         add_action('fluent_cart/register_payment_methods', function($args) {
             $gatewayManager = $args['gatewayManager'];
             
@@ -106,11 +102,13 @@ function wpkj_fc_alipay_bootstrap() {
             
         }, 10, 1);
         
-        // Register refund processor for automatic refunds
         $refundProcessor = new \WPKJFluentCart\Alipay\Processor\RefundProcessor();
         $refundProcessor->register();
         
-    }, 9); // Priority 9 to run before FluentCart's init at priority 10
+        $statusChecker = new \WPKJFluentCart\Alipay\Processor\PaymentStatusChecker();
+        $statusChecker->register();
+        
+    }, 9);
 }
 add_action('plugins_loaded', 'wpkj_fc_alipay_bootstrap', 20);
 

@@ -114,6 +114,7 @@ class AlipaySettingsBase extends BaseGatewaySettings
             'sign_type' => 'RSA2',
             'notify_url_verification' => 'yes',
             'auto_refund_on_cancel' => 'no',
+            'enable_face_to_face_pc' => 'no',
         ];
     }
 
