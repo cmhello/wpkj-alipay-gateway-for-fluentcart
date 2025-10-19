@@ -287,15 +287,10 @@ class PaymentProcessor
         $receivedAmount = (int)$totalAmount;
         
         if ($expectedAmount !== $receivedAmount) {
-            Logger::error('Amount Mismatch', [
+            Logger::error('Amount mismatch', [
                 'expected' => $expectedAmount,
                 'received' => $receivedAmount,
-                'expected_type' => gettype($transaction->total),
-                'received_type' => gettype($totalAmount),
-                'difference' => abs($expectedAmount - $receivedAmount),
-                'transaction_uuid' => $transaction->uuid,
-                'original_expected' => $transaction->total,
-                'original_received' => $totalAmount
+                'transaction_uuid' => $transaction->uuid
             ]);
             return;
         }
@@ -319,7 +314,7 @@ class PaymentProcessor
         $transaction->fill($transactionUpdateData);
         $transaction->save();
 
-        Logger::info('Payment Confirmed', [
+        Logger::info('Payment confirmed', [
             'transaction_uuid' => $transaction->uuid,
             'trade_no' => $alipayData['trade_no'],
             'amount' => $totalAmount

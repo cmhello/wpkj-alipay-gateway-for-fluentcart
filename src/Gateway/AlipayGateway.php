@@ -69,64 +69,22 @@ class AlipayGateway extends AbstractPaymentGateway
     /**
      * Boot the gateway
      * 
-     * CRITICAL: This method is called DURING gateway registration in 'init' hook.
-     * Do NOT add another 'init' hook here - it won't fire because init is already executing!
-     * Instead, directly check and handle the return URL right now.
+     * This method is called during gateway registration.
+     * We check for Alipay return parameters and trigger the handler immediately.
      * 
      * @return void
      */
     public function boot()
     {
-        Logger::info('=== AlipayGateway::boot() Called ===', [
-            'timestamp' => date('Y-m-d H:i:s'),
-            'has_get_params' => !empty($_GET),
-            'get_keys' => array_keys($_GET ?? [])
-        ]);
-        
-        // CRITICAL FIX: Don't use add_action('init') here!
-        // boot() is called DURING 'init', so adding another 'init' hook will never fire.
-        // We must check and handle the return URL directly, right now.
-        
-        // Only process if there are GET parameters
-        if (!empty($_GET)) {
-            Logger::info('GET Parameters Present', [
-                'params' => array_keys($_GET),
-                'has_trx_hash' => isset($_GET['trx_hash']),
-                'has_fct_redirect' => isset($_GET['fct_redirect'])
-            ]);
+        // Check for Alipay return parameters
+        if (!empty($_GET['trx_hash']) && 
+            !empty($_GET['fct_redirect']) && 
+            $_GET['fct_redirect'] === 'yes' &&
+            (!empty($_GET['sign']) || !empty($_GET['out_trade_no']))) {
             
-            // Check for Alipay return parameters
-            if (isset($_GET['trx_hash']) && 
-                isset($_GET['fct_redirect']) && 
-                $_GET['fct_redirect'] === 'yes') {
-                
-                Logger::info('Step 1: Found trx_hash and fct_redirect=yes', [
-                    'trx_hash' => sanitize_text_field($_GET['trx_hash'])
-                ]);
-                
-                // Additional check: must have Alipay signature parameters
-                if (isset($_GET['sign']) || isset($_GET['out_trade_no'])) {
-                    
-                    Logger::info('Step 2: Alipay Return Detected - Triggering Handler NOW', [
-                        'trx_hash' => sanitize_text_field($_GET['trx_hash']),
-                        'has_sign' => isset($_GET['sign']),
-                        'has_out_trade_no' => isset($_GET['out_trade_no'])
-                    ]);
-                    
-                    // Execute return handler IMMEDIATELY
-                    $returnHandler = new \WPKJFluentCart\Alipay\Webhook\ReturnHandler();
-                    $returnHandler->handleReturn();
-                    
-                    Logger::info('Step 3: Return Handler Completed', [
-                        'trx_hash' => sanitize_text_field($_GET['trx_hash'])
-                    ]);
-                } else {
-                    Logger::warning('Step 2 FAILED: No Alipay signature', [
-                        'trx_hash' => sanitize_text_field($_GET['trx_hash']),
-                        'params' => array_keys($_GET)
-                    ]);
-                }
-            }
+            // Trigger return handler immediately
+            $returnHandler = new \WPKJFluentCart\Alipay\Webhook\ReturnHandler();
+            $returnHandler->handleReturn();
         }
     }
 
