@@ -201,7 +201,7 @@ class AlipayGateway extends AbstractPaymentGateway
                             'test_app_id' => [
                                 'type' => 'text',
                                 'label' => __('App ID', 'wpkj-fluentcart-alipay-payment'),
-                                'placeholder' => '2021xxxxxxxxxxxx',
+                                'placeholder' => '9021xxxxxxxxxxxx',
                                 'required' => true,
                                 'help' => __('Your Alipay sandbox application ID (16 digits)', 'wpkj-fluentcart-alipay-payment')
                             ],
