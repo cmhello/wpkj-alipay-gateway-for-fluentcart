@@ -51,18 +51,12 @@ class AlipayGateway extends AbstractPaymentGateway
      */
     public function meta(): array
     {
-        // Get custom description or use default
-        $customDescription = $this->settings->get('gateway_description');
-        $description = !empty($customDescription) 
-            ? $customDescription 
-            : __('Pay securely with Alipay - Support PC, Mobile WAP, and In-App payments', 'wpkj-fluentcart-alipay-payment');
-
         return [
             'title' => 'Alipay',
             'route' => 'alipay',
             'slug' => 'alipay',
             'label' => 'Alipay',
-            'description' => $description,
+            'description' => esc_html__('Pay securely with Alipay - Support PC, Mobile WAP, and In-App payments', 'wpkj-fluentcart-alipay-payment'),
             'logo' => WPKJ_FC_ALIPAY_URL . 'assets/images/alipay-logo.svg',
             'icon' => WPKJ_FC_ALIPAY_URL . 'assets/images/alipay-icon.svg',
             'brand_color' => '#1678FF',
@@ -561,15 +555,19 @@ class AlipayGateway extends AbstractPaymentGateway
 
     /**
      * Enqueue frontend scripts
-     * FluentCart handles payment flow automatically, no custom scripts needed
      * 
      * @param string $hasSubscription Has subscription flag
      * @return array
      */
     public function getEnqueueScriptSrc($hasSubscription = 'no'): array
     {
-        // No custom scripts needed - FluentCart handles everything
-        return [];
+        return [
+            [
+                'handle' => 'wpkj-fc-alipay-checkout',
+                'src' => WPKJ_FC_ALIPAY_URL . 'assets/js/alipay-checkout.js',
+                'deps' => ['jquery']
+            ]
+        ];
     }
 
     /**
@@ -579,7 +577,16 @@ class AlipayGateway extends AbstractPaymentGateway
      */
     public function getLocalizeData(): array
     {
-        // No custom localization needed
-        return [];
+        // Get custom description or use default
+        $customDescription = $this->settings->get('gateway_description');
+        $description = !empty($customDescription) 
+            ? $customDescription 
+            : __('Pay securely with Alipay - Support PC, Mobile WAP, and In-App payments', 'wpkj-fluentcart-alipay-payment');
+        
+        return [
+            'wpkj_fc_alipay_data' => [
+                'description' => $description
+            ]
+        ];
     }
 }
