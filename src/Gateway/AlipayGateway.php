@@ -243,6 +243,12 @@ class AlipayGateway extends AbstractPaymentGateway
                     esc_html($notifyUrl),
                     esc_html__('This URL will receive payment notifications from Alipay.', 'wpkj-fluentcart-alipay-payment')
                 )
+            ],
+            'auto_refund_on_cancel' => [
+                'type' => 'checkbox',
+                'label' => __('Auto-refund on Order Cancellation', 'wpkj-fluentcart-alipay-payment'),
+                'checkbox_label' => __('Enable automatic refund when order is cancelled', 'wpkj-fluentcart-alipay-payment'),
+                'help' => __('When enabled, the system will automatically process a refund through Alipay when an order is cancelled by admin or customer.', 'wpkj-fluentcart-alipay-payment')
             ]
         ];
     }
@@ -421,11 +427,13 @@ class AlipayGateway extends AbstractPaymentGateway
 
             $outTradeNo = Helper::generateOutTradeNo($transaction->uuid);
             $refundAmount = Helper::toDecimal($amount);
+            // Use unique ID with random suffix to ensure idempotency
+            $outRequestNo = $transaction->uuid . '-manual-' . time() . '-' . substr(md5(uniqid()), 0, 8);
 
             $result = $api->refund([
                 'out_trade_no' => $outTradeNo,
                 'refund_amount' => $refundAmount,
-                'out_request_no' => $transaction->uuid . '-' . time(),
+                'out_request_no' => $outRequestNo,
                 'refund_reason' => Arr::get($args, 'reason', 'Customer requested refund')
             ]);
 

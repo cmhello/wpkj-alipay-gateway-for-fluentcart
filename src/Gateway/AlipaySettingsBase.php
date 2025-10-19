@@ -113,6 +113,7 @@ class AlipaySettingsBase extends BaseGatewaySettings
             'charset' => 'UTF-8',
             'sign_type' => 'RSA2',
             'notify_url_verification' => 'yes',
+            'auto_refund_on_cancel' => 'no',
         ];
     }
 

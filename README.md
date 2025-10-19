@@ -8,9 +8,10 @@ A professional Alipay payment gateway plugin for FluentCart with automatic clien
   - PC Web Payment (Desktop browsers)
   - Mobile WAP Payment (Mobile browsers)
   - Alipay App Payment (Alipay client)
+- **Auto-Refund**: Automatic refund processing when orders are cancelled
 - **Secure**: RSA2 signature encryption
 - **Webhook Support**: Real-time payment notifications
-- **Refund Support**: Process refunds from admin panel
+- **Refund Support**: Process refunds from admin panel (manual & automatic)
 - **Test Mode**: Sandbox environment for testing
 - **Multi-Currency**: Support for 14+ currencies
 - **i18n Ready**: Fully translatable
@@ -50,6 +51,23 @@ A professional Alipay payment gateway plugin for FluentCart with automatic clien
 ## Supported Currencies
 
 CNY, USD, EUR, GBP, HKD, JPY, KRW, SGD, AUD, CAD, CHF, NZD, THB, MYR
+
+## Auto-Refund Feature
+
+The plugin supports automatic refunds when orders are cancelled:
+
+1. **Enable**: Go to FluentCart > Settings > Payment Methods > Alipay
+2. **Check**: "Enable automatic refund when order is cancelled"
+3. **Save**: Click Save Settings
+
+When enabled:
+- System automatically refunds cancelled orders
+- Refund processed through Alipay API
+- Order activity logs updated
+- Email notifications sent (if configured)
+
+**Documentation**: See `AUTO_REFUND_GUIDE.md` for detailed information
+**Test Page**: Access `test-auto-refund.php` to verify installation
 
 ## Development
 

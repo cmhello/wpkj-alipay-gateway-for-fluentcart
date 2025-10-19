@@ -126,4 +126,37 @@ class Helper
     {
         return home_url('/');
     }
+
+    /**
+     * Format amount for display
+     * 
+     * @param int $cents Amount in cents
+     * @param string $currency Currency code
+     * @return string Formatted amount with currency symbol
+     */
+    public static function formatAmount($cents, $currency = 'CNY')
+    {
+        $amount = self::toDecimal($cents);
+        
+        $currencySymbols = [
+            'CNY' => '¥',
+            'USD' => '$',
+            'EUR' => '€',
+            'GBP' => '£',
+            'JPY' => '¥',
+            'HKD' => 'HK$',
+            'KRW' => '₩',
+            'SGD' => 'S$',
+            'AUD' => 'A$',
+            'CAD' => 'C$',
+            'CHF' => 'CHF',
+            'NZD' => 'NZ$',
+            'THB' => '฿',
+            'MYR' => 'RM'
+        ];
+        
+        $symbol = $currencySymbols[$currency] ?? $currency . ' ';
+        
+        return $symbol . number_format((float)$amount, 2, '.', ',');
+    }
 }
