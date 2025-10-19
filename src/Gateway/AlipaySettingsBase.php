@@ -103,6 +103,7 @@ class AlipaySettingsBase extends BaseGatewaySettings
             'define_test_keys' => false,
             'define_live_keys' => false,
             'payment_mode' => 'test',
+            'gateway_description' => '',
             'test_app_id' => '',
             'test_private_key' => '',
             'test_alipay_public_key' => '',
@@ -202,14 +203,46 @@ class AlipaySettingsBase extends BaseGatewaySettings
         }
 
         if ($mode === 'test') {
-            return defined('WPKJ_ALIPAY_TEST_PRIVATE_KEY') 
-                ? WPKJ_ALIPAY_TEST_PRIVATE_KEY 
-                : Helper::decryptKey($this->get()['test_private_key']);
+            if (defined('WPKJ_ALIPAY_TEST_PRIVATE_KEY')) {
+                return WPKJ_ALIPAY_TEST_PRIVATE_KEY;
+            }
+            
+            $encryptedKey = $this->get()['test_private_key'] ?? '';
+            if (empty($encryptedKey)) {
+                throw new \Exception(__('Test private key is not configured', 'wpkj-fluentcart-alipay-payment'));
+            }
+            
+            $decrypted = Helper::decryptKey($encryptedKey);
+            if ($decrypted === false || empty($decrypted)) {
+                \WPKJFluentCart\Alipay\Utils\Logger::error('Private Key Decryption Failed', [
+                    'mode' => 'test',
+                    'encrypted_key_length' => strlen($encryptedKey)
+                ]);
+                throw new \Exception(__('Unable to decrypt test private key. Please re-enter your credentials.', 'wpkj-fluentcart-alipay-payment'));
+            }
+            
+            return $decrypted;
         }
 
-        return defined('WPKJ_ALIPAY_LIVE_PRIVATE_KEY') 
-            ? WPKJ_ALIPAY_LIVE_PRIVATE_KEY 
-            : Helper::decryptKey($this->get()['live_private_key']);
+        if (defined('WPKJ_ALIPAY_LIVE_PRIVATE_KEY')) {
+            return WPKJ_ALIPAY_LIVE_PRIVATE_KEY;
+        }
+        
+        $encryptedKey = $this->get()['live_private_key'] ?? '';
+        if (empty($encryptedKey)) {
+            throw new \Exception(__('Live private key is not configured', 'wpkj-fluentcart-alipay-payment'));
+        }
+        
+        $decrypted = Helper::decryptKey($encryptedKey);
+        if ($decrypted === false || empty($decrypted)) {
+            \WPKJFluentCart\Alipay\Utils\Logger::error('Private Key Decryption Failed', [
+                'mode' => 'live',
+                'encrypted_key_length' => strlen($encryptedKey)
+            ]);
+            throw new \Exception(__('Unable to decrypt live private key. Please re-enter your credentials.', 'wpkj-fluentcart-alipay-payment'));
+        }
+        
+        return $decrypted;
     }
 
     /**

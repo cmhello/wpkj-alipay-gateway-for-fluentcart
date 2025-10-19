@@ -51,12 +51,18 @@ class AlipayGateway extends AbstractPaymentGateway
      */
     public function meta(): array
     {
+        // Get custom description or use default
+        $customDescription = $this->settings->get('gateway_description');
+        $description = !empty($customDescription) 
+            ? $customDescription 
+            : __('Pay securely with Alipay - Support PC, Mobile WAP, and In-App payments', 'wpkj-fluentcart-alipay-payment');
+
         return [
             'title' => 'Alipay',
             'route' => 'alipay',
             'slug' => 'alipay',
             'label' => 'Alipay',
-            'description' => __('Pay securely with Alipay - Support PC, Mobile WAP, and In-App payments', 'wpkj-fluentcart-alipay-payment'),
+            'description' => $description,
             'logo' => WPKJ_FC_ALIPAY_URL . 'assets/images/alipay-logo.svg',
             'icon' => WPKJ_FC_ALIPAY_URL . 'assets/images/alipay-icon.svg',
             'brand_color' => '#1678FF',
@@ -162,6 +168,12 @@ class AlipayGateway extends AbstractPaymentGateway
                 'label' => __('Alipay', 'wpkj-fluentcart-alipay-payment'),
                 'type' => 'notice'
             ],
+            'gateway_description' => [
+                'type' => 'text',
+                'label' => __('Gateway Description', 'wpkj-fluentcart-alipay-payment'),
+                'placeholder' => __('Pay securely with Alipay - Support PC, Mobile WAP, and In-App payments', 'wpkj-fluentcart-alipay-payment'),
+                'help' => __('This description will be displayed on the checkout page when customers select Alipay. Leave empty to use default.', 'wpkj-fluentcart-alipay-payment')
+            ],
             'payment_mode' => [
                 'type' => 'tabs',
                 'schema' => [
@@ -250,19 +262,65 @@ class AlipayGateway extends AbstractPaymentGateway
         $privateKey = Arr::get($data, "{$mode}_private_key");
         $alipayPublicKey = Arr::get($data, "{$mode}_alipay_public_key");
 
-        if (empty($appId) || empty($privateKey) || empty($alipayPublicKey)) {
+        // Check if App ID is provided
+        if (empty($appId)) {
             return [
                 'status' => 'failed',
-                'message' => __('All credential fields are required!', 'wpkj-fluentcart-alipay-payment')
+                'message' => __('App ID is required!', 'wpkj-fluentcart-alipay-payment')
             ];
         }
 
-        // Validate App ID format
+        // Validate App ID format (16 digits)
         if (!preg_match('/^\d{16}$/', $appId)) {
             return [
                 'status' => 'failed',
                 'message' => __('Invalid App ID format. It should be 16 digits.', 'wpkj-fluentcart-alipay-payment')
             ];
+        }
+
+        // Only validate Private Key if it's being changed (not encrypted)
+        // FluentCart's password fields send empty string when not modified, or encrypted value
+        if (!empty($privateKey)) {
+            // Check if this is an encrypted value (FluentCart encrypted keys are very long base64)
+            // Encrypted values are typically 2000+ characters and only contain base64 characters
+            $isEncrypted = strlen($privateKey) > 2000 && preg_match('/^[A-Za-z0-9+\/]+=*$/', $privateKey) && !preg_match('/^MII/', $privateKey);
+            
+            // Only validate format if it's a new/updated key (not encrypted)
+            if (!$isEncrypted) {
+                $cleanPrivateKey = str_replace(["\r", "\n", ' ', '-----BEGIN RSA PRIVATE KEY-----', '-----END RSA PRIVATE KEY-----', '-----BEGIN PRIVATE KEY-----', '-----END PRIVATE KEY-----'], '', $privateKey);
+                
+                if (!preg_match('/^MII[A-Za-z0-9+\/=]+$/', $cleanPrivateKey)) {
+                    return [
+                        'status' => 'failed',
+                        'message' => __('Invalid Private Key format. Please paste the RSA2 key content without header/footer.', 'wpkj-fluentcart-alipay-payment')
+                    ];
+                }
+
+                // Validate key length (RSA2 private key should be at least 1500 characters)
+                if (strlen($cleanPrivateKey) < 1500) {
+                    return [
+                        'status' => 'failed',
+                        'message' => __('Private Key appears to be too short. Please ensure you are using RSA2 (2048-bit) key.', 'wpkj-fluentcart-alipay-payment')
+                    ];
+                }
+            }
+        }
+
+        // Only validate Alipay Public Key if it's being changed
+        if (!empty($alipayPublicKey)) {
+            // Check if this is an encrypted value
+            $isEncrypted = strlen($alipayPublicKey) > 2000 && preg_match('/^[A-Za-z0-9+\/]+=*$/', $alipayPublicKey) && !preg_match('/^MII/', $alipayPublicKey);
+            
+            if (!$isEncrypted) {
+                $cleanPublicKey = str_replace(["\r", "\n", ' ', '-----BEGIN PUBLIC KEY-----', '-----END PUBLIC KEY-----'], '', $alipayPublicKey);
+                
+                if (!preg_match('/^MII[A-Za-z0-9+\/=]+$/', $cleanPublicKey)) {
+                    return [
+                        'status' => 'failed',
+                        'message' => __('Invalid Alipay Public Key format. Please paste the RSA2 public key content without header/footer.', 'wpkj-fluentcart-alipay-payment')
+                    ];
+                }
+            }
         }
 
         return [
@@ -296,7 +354,47 @@ class AlipayGateway extends AbstractPaymentGateway
         $mode = Arr::get($data, 'payment_mode', 'test');
         
         if (!empty($data["{$mode}_private_key"])) {
-            $data["{$mode}_private_key"] = FluentCartHelper::encryptKey($data["{$mode}_private_key"]);
+            // Check if the key is already encrypted
+            // Encrypted values are typically 2000+ characters and only contain base64 characters
+            $isEncrypted = strlen($data["{$mode}_private_key"]) > 2000 
+                && preg_match('/^[A-Za-z0-9+\/]+=*$/', $data["{$mode}_private_key"]) 
+                && !preg_match('/^MII/', $data["{$mode}_private_key"]);
+            
+            // Only encrypt if it's a new value (not already encrypted)
+            if (!$isEncrypted) {
+                $encrypted = FluentCartHelper::encryptKey($data["{$mode}_private_key"]);
+                
+                // Verify encryption succeeded
+                if (empty($encrypted)) {
+                    Logger::error('Private Key Encryption Failed', [
+                        'mode' => $mode,
+                        'original_key_length' => strlen($data["{$mode}_private_key"])
+                    ]);
+                    throw new \Exception(
+                        __('Failed to encrypt private key. Please try again.', 'wpkj-fluentcart-alipay-payment')
+                    );
+                }
+                
+                $data["{$mode}_private_key"] = $encrypted;
+                
+                Logger::info('Private Key Encrypted Successfully', [
+                    'mode' => $mode,
+                    'encrypted_length' => strlen($encrypted)
+                ]);
+            } else {
+                // Key is already encrypted, keep it as is
+                Logger::info('Private Key Already Encrypted', [
+                    'mode' => $mode
+                ]);
+            }
+        } else {
+            // No private key in data, restore from old settings if exists
+            if (!empty($oldSettings["{$mode}_private_key"])) {
+                $data["{$mode}_private_key"] = $oldSettings["{$mode}_private_key"];
+                Logger::info('Private Key Restored from Old Settings', [
+                    'mode' => $mode
+                ]);
+            }
         }
 
         return $data;
@@ -320,7 +418,6 @@ class AlipayGateway extends AbstractPaymentGateway
         }
 
         try {
-            $processor = new PaymentProcessor($this->settings);
             $api = new \WPKJFluentCart\Alipay\API\AlipayAPI($this->settings);
 
             $outTradeNo = Helper::generateOutTradeNo($transaction->uuid);
@@ -337,10 +434,63 @@ class AlipayGateway extends AbstractPaymentGateway
                 return $result;
             }
 
+            // Verify Alipay refund response
+            $responseKey = 'alipay_trade_refund_response';
+            if (!isset($result[$responseKey])) {
+                Logger::error('Invalid Refund Response Structure', [
+                    'transaction_uuid' => $transaction->uuid,
+                    'response_keys' => array_keys($result)
+                ]);
+                return new \WP_Error(
+                    'alipay_refund_error',
+                    __('Invalid refund response from Alipay', 'wpkj-fluentcart-alipay-payment')
+                );
+            }
+
+            $refundResponse = $result[$responseKey];
+            
+            // Check business result code
+            if (!isset($refundResponse['code']) || $refundResponse['code'] !== '10000') {
+                $errorMsg = $refundResponse['sub_msg'] ?? $refundResponse['msg'] ?? __('Refund failed', 'wpkj-fluentcart-alipay-payment');
+                
+                Logger::error('Refund Failed', [
+                    'transaction_uuid' => $transaction->uuid,
+                    'code' => $refundResponse['code'] ?? 'unknown',
+                    'message' => $errorMsg,
+                    'sub_code' => $refundResponse['sub_code'] ?? ''
+                ]);
+                
+                return new \WP_Error('alipay_refund_error', $errorMsg);
+            }
+
+            // Verify refunded amount matches request
+            if (isset($refundResponse['refund_fee'])) {
+                $actualRefundedAmount = Helper::toCents($refundResponse['refund_fee']);
+                if ($actualRefundedAmount !== $amount) {
+                    Logger::warning('Refund Amount Mismatch', [
+                        'transaction_uuid' => $transaction->uuid,
+                        'requested' => $amount,
+                        'actual_refunded' => $actualRefundedAmount,
+                        'difference' => abs($actualRefundedAmount - $amount)
+                    ]);
+                }
+            }
+
             Logger::info('Refund Successful', [
                 'transaction_uuid' => $transaction->uuid,
-                'amount' => $refundAmount
+                'amount' => $refundAmount,
+                'trade_no' => $refundResponse['trade_no'] ?? '',
+                'fund_change' => $refundResponse['fund_change'] ?? ''
             ]);
+
+            // Update transaction meta with refund information
+            $transaction->meta = array_merge($transaction->meta ?? [], [
+                'refunded_at' => current_time('mysql'),
+                'refund_trade_no' => $refundResponse['trade_no'] ?? '',
+                'refund_amount' => $refundAmount,
+                'refund_reason' => Arr::get($args, 'reason', 'Customer requested refund')
+            ]);
+            $transaction->save();
 
             return $result;
 
@@ -411,19 +561,15 @@ class AlipayGateway extends AbstractPaymentGateway
 
     /**
      * Enqueue frontend scripts
+     * FluentCart handles payment flow automatically, no custom scripts needed
      * 
      * @param string $hasSubscription Has subscription flag
      * @return array
      */
     public function getEnqueueScriptSrc($hasSubscription = 'no'): array
     {
-        return [
-            [
-                'handle' => 'wpkj-fc-alipay-checkout',
-                'src' => WPKJ_FC_ALIPAY_URL . 'assets/js/checkout.js',
-                'deps' => ['jquery']
-            ]
-        ];
+        // No custom scripts needed - FluentCart handles everything
+        return [];
     }
 
     /**
@@ -433,14 +579,7 @@ class AlipayGateway extends AbstractPaymentGateway
      */
     public function getLocalizeData(): array
     {
-        return [
-            'wpkj_fc_alipay_data' => [
-                'translations' => [
-                    'processing' => __('Processing payment...', 'wpkj-fluentcart-alipay-payment'),
-                    'redirecting' => __('Redirecting to Alipay...', 'wpkj-fluentcart-alipay-payment'),
-                    'error' => __('Payment error occurred', 'wpkj-fluentcart-alipay-payment')
-                ]
-            ]
-        ];
+        // No custom localization needed
+        return [];
     }
 }

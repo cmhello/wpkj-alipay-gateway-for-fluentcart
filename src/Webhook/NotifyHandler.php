@@ -69,6 +69,25 @@ class NotifyHandler
 
         Logger::info('Notify Received', $data);
 
+        // Check for replay attack using notify_id
+        $notifyId = $data['notify_id'] ?? '';
+        if (!empty($notifyId)) {
+            $cacheKey = 'alipay_notify_processed_' . md5($notifyId);
+            
+            if (get_transient($cacheKey)) {
+                Logger::warning('Duplicate Notification Ignored (Replay Attack Prevention)', [
+                    'notify_id' => $notifyId,
+                    'out_trade_no' => $data['out_trade_no'] ?? ''
+                ]);
+                // Return success to prevent Alipay from retrying
+                $this->sendResponse('success');
+                return;
+            }
+            
+            // Mark this notification as processed (24 hours)
+            set_transient($cacheKey, true, DAY_IN_SECONDS);
+        }
+
         // Verify signature
         if (!$this->verifyNotification($data)) {
             Logger::error('Notify Signature Verification Failed', $data);

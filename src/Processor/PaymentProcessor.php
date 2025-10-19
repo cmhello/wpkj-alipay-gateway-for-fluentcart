@@ -58,6 +58,22 @@ class PaymentProcessor
         $order = $paymentInstance->order;
 
         try {
+            // Validate transaction status - prevent duplicate payment
+            if ($transaction->status === Status::TRANSACTION_SUCCEEDED) {
+                throw new \Exception(
+                    __('Transaction has already been completed.', 'wpkj-fluentcart-alipay-payment')
+                );
+            }
+
+            // Validate order status
+            if (in_array($order->status, ['completed', 'processing'])) {
+                Logger::warning('Payment Attempt on Completed Order', [
+                    'order_uuid' => $order->uuid,
+                    'order_status' => $order->status,
+                    'transaction_status' => $transaction->status
+                ]);
+            }
+
             // Build payment data
             $paymentData = $this->buildPaymentData($paymentInstance);
 
@@ -118,6 +134,20 @@ class PaymentProcessor
 
         // Calculate total amount
         $totalAmount = Helper::toDecimal($transaction->total);
+
+        // Validate payment amount
+        if ($transaction->total <= 0) {
+            throw new \Exception(
+                __('Invalid payment amount. Amount must be greater than zero.', 'wpkj-fluentcart-alipay-payment')
+            );
+        }
+
+        // Check Alipay single transaction limit (500,000 CNY)
+        if ($totalAmount > 500000) {
+            throw new \Exception(
+                __('Payment amount exceeds Alipay single transaction limit (500,000 CNY).', 'wpkj-fluentcart-alipay-payment')
+            );
+        }
 
         // Generate out_trade_no
         $outTradeNo = Helper::generateOutTradeNo($transaction->uuid);
@@ -217,12 +247,13 @@ class PaymentProcessor
             return;
         }
 
-        // Verify payment amount
+        // Verify payment amount with strict comparison
         $totalAmount = Helper::toCents($alipayData['total_amount']);
-        if ($totalAmount != $transaction->total) {
+        if ($totalAmount !== $transaction->total) {
             Logger::error('Amount Mismatch', [
                 'expected' => $transaction->total,
                 'received' => $totalAmount,
+                'difference' => abs($totalAmount - $transaction->total),
                 'transaction_uuid' => $transaction->uuid
             ]);
             return;

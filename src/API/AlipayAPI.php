@@ -291,11 +291,47 @@ class AlipayAPI
                 return $response;
             }
 
-            $body = wp_remote_retrieve_body($response);
-            $result = json_decode($body, true);
+            // Check HTTP status code
+            $httpCode = wp_remote_retrieve_response_code($response);
+            if ($httpCode !== 200) {
+                Logger::error('HTTP Request Failed', [
+                    'http_code' => $httpCode,
+                    'method' => 'queryPayment',
+                    'out_trade_no' => $outTradeNo
+                ]);
+                return new \WP_Error(
+                    'alipay_http_error',
+                    sprintf(__('HTTP %d error from Alipay', 'wpkj-fluentcart-alipay-payment'), $httpCode)
+                );
+            }
 
-            if (!$result) {
-                return new \WP_Error('alipay_query_error', 'Invalid response from Alipay');
+            $body = wp_remote_retrieve_body($response);
+            
+            // Validate response body
+            if (empty($body)) {
+                return new \WP_Error('alipay_query_error', __('Empty response from Alipay', 'wpkj-fluentcart-alipay-payment'));
+            }
+
+            $result = json_decode($body, true);
+            $jsonError = json_last_error();
+
+            if ($jsonError !== JSON_ERROR_NONE) {
+                Logger::error('JSON Decode Error', [
+                    'error' => json_last_error_msg(),
+                    'error_code' => $jsonError,
+                    'body_preview' => substr($body, 0, 500)
+                ]);
+                return new \WP_Error(
+                    'alipay_query_error',
+                    __('Invalid JSON response from Alipay', 'wpkj-fluentcart-alipay-payment')
+                );
+            }
+
+            if (!is_array($result)) {
+                return new \WP_Error(
+                    'alipay_query_error',
+                    __('Unexpected response format from Alipay', 'wpkj-fluentcart-alipay-payment')
+                );
             }
 
             return $result;
@@ -336,11 +372,47 @@ class AlipayAPI
                 return $response;
             }
 
-            $body = wp_remote_retrieve_body($response);
-            $result = json_decode($body, true);
+            // Check HTTP status code
+            $httpCode = wp_remote_retrieve_response_code($response);
+            if ($httpCode !== 200) {
+                Logger::error('HTTP Request Failed', [
+                    'http_code' => $httpCode,
+                    'method' => 'refund',
+                    'out_trade_no' => $refundData['out_trade_no']
+                ]);
+                return new \WP_Error(
+                    'alipay_http_error',
+                    sprintf(__('HTTP %d error from Alipay', 'wpkj-fluentcart-alipay-payment'), $httpCode)
+                );
+            }
 
-            if (!$result) {
-                return new \WP_Error('alipay_refund_error', 'Invalid response from Alipay');
+            $body = wp_remote_retrieve_body($response);
+            
+            // Validate response body
+            if (empty($body)) {
+                return new \WP_Error('alipay_refund_error', __('Empty response from Alipay', 'wpkj-fluentcart-alipay-payment'));
+            }
+
+            $result = json_decode($body, true);
+            $jsonError = json_last_error();
+
+            if ($jsonError !== JSON_ERROR_NONE) {
+                Logger::error('JSON Decode Error', [
+                    'error' => json_last_error_msg(),
+                    'error_code' => $jsonError,
+                    'body_preview' => substr($body, 0, 500)
+                ]);
+                return new \WP_Error(
+                    'alipay_refund_error',
+                    __('Invalid JSON response from Alipay', 'wpkj-fluentcart-alipay-payment')
+                );
+            }
+
+            if (!is_array($result)) {
+                return new \WP_Error(
+                    'alipay_refund_error',
+                    __('Unexpected response format from Alipay', 'wpkj-fluentcart-alipay-payment')
+                );
             }
 
             Logger::info('Refund Processed', [
