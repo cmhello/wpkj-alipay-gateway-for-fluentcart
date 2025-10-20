@@ -159,7 +159,7 @@ class PaymentProcessor
             $transaction->meta = array_merge($transaction->meta ?? [], [
                 'qr_code' => $result['qr_code'],
                 'payment_method_type' => 'face_to_face',
-                'out_trade_no' => $paymentData['out_trade_no'] // Store for status queries
+                'out_trade_no' => $paymentData['out_trade_no']
             ]);
             $transaction->save();
 
@@ -171,19 +171,13 @@ class PaymentProcessor
 
             // Build direct QR code page URL (NOT using custom_checkout)
             $qrPageUrl = home_url('/');
+            $qrCodeEncoded = base64_encode($result['qr_code']);
             $qrPageUrl = add_query_arg([
                 'fluent-cart' => 'alipay_f2f_payment',
                 'order_hash' => $order->uuid,
-                'qr_code' => base64_encode($result['qr_code']),
+                'qr_code' => $qrCodeEncoded,
                 'trx_uuid' => $transaction->uuid
             ], $qrPageUrl);
-
-            Logger::info('Face-to-Face Payment Redirect URL', [
-                'redirect_to' => $qrPageUrl,
-                'order_uuid' => $order->uuid,
-                'transaction_uuid' => $transaction->uuid,
-                'has_qr_code' => !empty($result['qr_code'])
-            ]);
 
             // Return the same format as COD gateway:
             // redirect_to should be the direct URL string

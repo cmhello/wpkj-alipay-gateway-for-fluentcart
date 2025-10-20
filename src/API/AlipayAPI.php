@@ -138,14 +138,6 @@ class AlipayAPI
             if (!empty($orderData['timeout_express'])) {
                 $bizContent['timeout_express'] = $orderData['timeout_express'];
             }
-            
-            // Log the biz_content before encoding to debug Chinese character issues
-            Logger::info('Face-to-Face Payment BizContent', [
-                'subject' => $bizContent['subject'],
-                'subject_encoding' => mb_detect_encoding($bizContent['subject']),
-                'subject_is_utf8' => mb_check_encoding($bizContent['subject'], 'UTF-8') ? 'YES' : 'NO',
-                'body' => $bizContent['body'] ?? 'N/A'
-            ]);
 
             $params = $this->buildRequestParams(
                 $bizContent,
@@ -160,8 +152,13 @@ class AlipayAPI
                 'mode' => $this->settings->getMode()
             ]);
 
+            // CRITICAL: Use http_build_query() to ensure proper encoding
+            // wp_remote_post() with array body may cause encoding issues with Chinese characters
             $response = wp_remote_post($this->config['gateway_url'], [
-                'body' => $params,
+                'body' => http_build_query($params, '', '&', PHP_QUERY_RFC3986),
+                'headers' => [
+                    'Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8'
+                ],
                 'timeout' => 30,
             ]);
 
@@ -248,13 +245,15 @@ class AlipayAPI
                 );
             }
 
+            $qrCode = $precreateResponse['qr_code'];
+            
             Logger::info('Face-to-Face Payment Created', [
                 'out_trade_no' => $orderData['out_trade_no'],
                 'amount' => $orderData['total_amount']
             ]);
 
             return [
-                'qr_code' => $precreateResponse['qr_code'],
+                'qr_code' => $qrCode,
                 'out_trade_no' => $orderData['out_trade_no'],
                 'method' => 'alipay.trade.precreate'
             ];

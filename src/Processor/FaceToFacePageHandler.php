@@ -137,6 +137,16 @@ class FaceToFacePageHandler
         // Enqueue jQuery
         wp_enqueue_script('jquery');
         
+        // Enqueue QRCode.js library for client-side QR code generation
+        // This avoids URL encoding issues with Chinese characters
+        wp_enqueue_script(
+            'qrcodejs',
+            'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
+            [],
+            '1.0.0',
+            true
+        );
+        
         // Enqueue CSS with file modification time as version
         $cssFile = WPKJ_FC_ALIPAY_PATH . 'assets/css/face-to-face-payment.css';
         $cssVersion = file_exists($cssFile) ? filemtime($cssFile) : WPKJ_FC_ALIPAY_VERSION;
