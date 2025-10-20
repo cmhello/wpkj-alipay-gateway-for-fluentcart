@@ -3,6 +3,7 @@
 namespace WPKJFluentCart\Alipay\Detector;
 
 use WPKJFluentCart\Alipay\Gateway\AlipaySettingsBase;
+use WPKJFluentCart\Alipay\Utils\Logger;
 
 /**
  * Client Detector
@@ -19,6 +20,11 @@ class ClientDetector
     public static function isAlipayClient(): bool
     {
         $userAgent = self::getUserAgent();
+        
+        if (empty($userAgent)) {
+            return false;
+        }
+        
         return stripos($userAgent, 'AlipayClient') !== false;
     }
 
@@ -30,6 +36,11 @@ class ClientDetector
     public static function isMobile(): bool
     {
         $userAgent = self::getUserAgent();
+        
+        // Handle empty user agent
+        if (empty($userAgent)) {
+            return false;
+        }
         
         $mobileAgents = [
             'Android', 'iPhone', 'iPad', 'iPod', 'BlackBerry', 
@@ -75,6 +86,15 @@ class ClientDetector
      */
     private static function getUserAgent(): string
     {
-        return $_SERVER['HTTP_USER_AGENT'] ?? '';
+        // Check if HTTP_USER_AGENT exists (may not in CLI or proxied environments)
+        if (!isset($_SERVER['HTTP_USER_AGENT'])) {
+            Logger::info('User Agent Not Available', [
+                'environment' => php_sapi_name(),
+                'is_cli' => php_sapi_name() === 'cli'
+            ]);
+            return '';
+        }
+        
+        return $_SERVER['HTTP_USER_AGENT'];
     }
 }

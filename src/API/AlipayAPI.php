@@ -2,7 +2,9 @@
 
 namespace WPKJFluentCart\Alipay\API;
 
+use WPKJFluentCart\Alipay\Config\AlipayConfig;
 use WPKJFluentCart\Alipay\Gateway\AlipaySettingsBase;
+use WPKJFluentCart\Alipay\Services\EncodingService;
 use WPKJFluentCart\Alipay\Utils\Helper;
 use WPKJFluentCart\Alipay\Utils\Logger;
 use WPKJFluentCart\Alipay\Detector\ClientDetector;
@@ -31,8 +33,8 @@ class AlipayAPI
     /**
      * Alipay gateway URLs
      */
-    const GATEWAY_URL_PROD = 'https://openapi.alipay.com/gateway.do';
-    const GATEWAY_URL_SANDBOX = 'https://openapi-sandbox.dl.alipaydev.com/gateway.do';
+    const GATEWAY_URL_PROD = AlipayConfig::GATEWAY_URL_PROD;
+    const GATEWAY_URL_SANDBOX = AlipayConfig::GATEWAY_URL_SANDBOX;
 
     /**
      * Constructor
@@ -136,6 +138,14 @@ class AlipayAPI
             if (!empty($orderData['timeout_express'])) {
                 $bizContent['timeout_express'] = $orderData['timeout_express'];
             }
+            
+            // Log the biz_content before encoding to debug Chinese character issues
+            Logger::info('Face-to-Face Payment BizContent', [
+                'subject' => $bizContent['subject'],
+                'subject_encoding' => mb_detect_encoding($bizContent['subject']),
+                'subject_is_utf8' => mb_check_encoding($bizContent['subject'], 'UTF-8') ? 'YES' : 'NO',
+                'body' => $bizContent['body'] ?? 'N/A'
+            ]);
 
             $params = $this->buildRequestParams(
                 $bizContent,
@@ -283,6 +293,9 @@ class AlipayAPI
      */
     private function buildRequestParams($bizContent, $method, $returnUrl = '', $notifyUrl = '')
     {
+        // Use centralized EncodingService for consistent UTF-8 handling
+        $bizContent = EncodingService::ensureUtf8Array($bizContent);
+        
         $params = [
             'app_id' => $this->config['app_id'],
             'method' => $method,
@@ -290,7 +303,9 @@ class AlipayAPI
             'sign_type' => $this->config['sign_type'],
             'timestamp' => date('Y-m-d H:i:s'),
             'version' => '1.0',
-            'biz_content' => json_encode($bizContent, JSON_UNESCAPED_UNICODE),
+            // JSON_UNESCAPED_UNICODE ensures Chinese characters are not escaped
+            // JSON_UNESCAPED_SLASHES prevents escaping of forward slashes
+            'biz_content' => json_encode($bizContent, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         ];
         
         // Add return_url and notify_url if provided (they must be included in signature)
@@ -529,17 +544,28 @@ class AlipayAPI
     /**
      * Process refund
      * 
-     * @param array $refundData Refund data
+     * Supports both out_trade_no and trade_no for identifying the transaction to refund.
+     * Priority: trade_no (Alipay's transaction ID) > out_trade_no (merchant's order ID)
+     * 
+     * @param array $refundData Refund data (must contain either 'trade_no' or 'out_trade_no')
      * @return array|\WP_Error Refund result or error
      */
     public function refund($refundData)
     {
         try {
             $bizContent = [
-                'out_trade_no' => $refundData['out_trade_no'],
                 'refund_amount' => $refundData['refund_amount'],
                 'out_request_no' => $refundData['out_request_no'],
             ];
+            
+            // Prefer trade_no over out_trade_no (trade_no is more reliable)
+            if (!empty($refundData['trade_no'])) {
+                $bizContent['trade_no'] = $refundData['trade_no'];
+            } elseif (!empty($refundData['out_trade_no'])) {
+                $bizContent['out_trade_no'] = $refundData['out_trade_no'];
+            } else {
+                throw new \Exception('Refund requires either trade_no or out_trade_no');
+            }
 
             if (!empty($refundData['refund_reason'])) {
                 $bizContent['refund_reason'] = $refundData['refund_reason'];
@@ -562,7 +588,7 @@ class AlipayAPI
                 Logger::error('HTTP Request Failed', [
                     'http_code' => $httpCode,
                     'method' => 'refund',
-                    'out_trade_no' => $refundData['out_trade_no']
+                    'identifier' => $refundData['trade_no'] ?? $refundData['out_trade_no'] ?? 'unknown'
                 ]);
                 return new \WP_Error(
                     'alipay_http_error',
@@ -600,7 +626,7 @@ class AlipayAPI
             }
 
             Logger::info('Refund Processed', [
-                'out_trade_no' => $refundData['out_trade_no'],
+                'identifier' => $refundData['trade_no'] ?? $refundData['out_trade_no'] ?? 'unknown',
                 'refund_amount' => $refundData['refund_amount']
             ]);
 
@@ -621,6 +647,15 @@ class AlipayAPI
     public function queryTrade($outTradeNo)
     {
         try {
+            // Check cache first (short TTL to reduce API calls)
+            $cacheKey = 'alipay_query_' . md5($outTradeNo);
+            $cached = get_transient($cacheKey);
+            
+            if ($cached !== false) {
+                Logger::info('Query Trade Cache Hit', ['out_trade_no' => $outTradeNo]);
+                return $cached;
+            }
+            
             $bizContent = [
                 'out_trade_no' => $outTradeNo,
             ];
@@ -700,10 +735,13 @@ class AlipayAPI
                     Logger::info('Trade Not Exist (Payment Pending)', [
                         'out_trade_no' => $outTradeNo
                     ]);
-                    return [
+                    $result = [
                         'trade_status' => 'WAIT_BUYER_PAY',
                         'msg' => 'Trade not found, payment may still be pending'
                     ];
+                    // Cache pending status for shorter time
+                    set_transient($cacheKey, $result, 2);
+                    return $result;
                 }
                 
                 Logger::error('Query Trade Failed', [
@@ -719,6 +757,11 @@ class AlipayAPI
                 'out_trade_no' => $outTradeNo,
                 'trade_status' => $tradeData['trade_status'] ?? 'unknown'
             ]);
+
+            // Cache successful result (use config TTL)
+            if (isset($tradeData['trade_status'])) {
+                set_transient($cacheKey, $tradeData, AlipayConfig::QUERY_CACHE_TTL);
+            }
 
             return $tradeData;
 

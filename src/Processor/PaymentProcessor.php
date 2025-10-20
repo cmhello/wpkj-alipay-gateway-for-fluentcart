@@ -9,8 +9,11 @@ use FluentCart\App\Models\OrderTransaction;
 use FluentCart\App\Services\Payments\PaymentInstance;
 use FluentCart\App\Services\Payments\PaymentHelper;
 use WPKJFluentCart\Alipay\API\AlipayAPI;
+use WPKJFluentCart\Alipay\Config\AlipayConfig;
 use WPKJFluentCart\Alipay\Gateway\AlipaySettingsBase;
 use WPKJFluentCart\Alipay\Detector\ClientDetector;
+use WPKJFluentCart\Alipay\Services\OrderService;
+use WPKJFluentCart\Alipay\Services\EncodingService;
 use WPKJFluentCart\Alipay\Utils\Helper;
 use WPKJFluentCart\Alipay\Utils\Logger;
 use FluentCart\Framework\Support\Arr;
@@ -87,10 +90,18 @@ class PaymentProcessor
                 throw new \Exception($result->get_error_message());
             }
 
+            // CRITICAL: Save out_trade_no to transaction meta for later queries and refunds
+            $transaction->meta = array_merge($transaction->meta ?? [], [
+                'out_trade_no' => $paymentData['out_trade_no'],
+                'payment_method_type' => 'web'
+            ]);
+            $transaction->save();
+
             Logger::info('Payment Initiated', [
                 'order_uuid' => $order->uuid,
                 'transaction_uuid' => $transaction->uuid,
-                'amount' => $paymentData['total_amount']
+                'amount' => $paymentData['total_amount'],
+                'out_trade_no' => $paymentData['out_trade_no']
             ]);
 
             return [
@@ -143,9 +154,12 @@ class PaymentProcessor
                 throw new \Exception($result->get_error_message());
             }
 
+            // CRITICAL: Save out_trade_no to transaction meta for later queries
+            // Since out_trade_no now contains timestamp, we must store it for status checks
             $transaction->meta = array_merge($transaction->meta ?? [], [
                 'qr_code' => $result['qr_code'],
-                'payment_method_type' => 'face_to_face'
+                'payment_method_type' => 'face_to_face',
+                'out_trade_no' => $paymentData['out_trade_no'] // Store for status queries
             ]);
             $transaction->save();
 
@@ -214,14 +228,19 @@ class PaymentProcessor
             );
         }
 
-        // Check Alipay single transaction limit (500,000 CNY)
-        if ($totalAmount > 500000) {
+        // Check Alipay single transaction limit
+        if ($totalAmount > AlipayConfig::MAX_SINGLE_TRANSACTION_AMOUNT) {
             throw new \Exception(
-                __('Payment amount exceeds Alipay single transaction limit (500,000 CNY).', 'wpkj-fluentcart-alipay-payment')
+                sprintf(
+                    __('Payment amount exceeds Alipay single transaction limit (%s CNY).', 'wpkj-fluentcart-alipay-payment'),
+                    number_format(AlipayConfig::MAX_SINGLE_TRANSACTION_AMOUNT)
+                )
             );
         }
 
-        // Generate out_trade_no
+        // Generate unique out_trade_no with timestamp
+        // IMPORTANT: Each payment attempt must have a unique out_trade_no to prevent
+        // "transaction info tampered" error when users make repeated orders
         $outTradeNo = Helper::generateOutTradeNo($transaction->uuid);
 
         // Build subject and body
@@ -239,7 +258,7 @@ class PaymentProcessor
             'body' => $body,
             'return_url' => $returnUrl,
             'notify_url' => $notifyUrl,
-            'timeout_express' => '30m', // 30 minutes timeout
+            'timeout_express' => AlipayConfig::DEFAULT_PAYMENT_TIMEOUT,
         ];
     }
 
@@ -255,14 +274,17 @@ class PaymentProcessor
         
         if (count($items) === 1) {
             $item = $items[0];
-            // Use title if available, otherwise use post_title
-            // Don't concatenate both to avoid duplication
             $itemTitle = !empty($item->title) ? $item->title : $item->post_title;
-            return mb_substr($itemTitle, 0, 256, 'UTF-8');
+            
+            // Use centralized EncodingService for DRY principle
+            // Alipay subject max length from config
+            return EncodingService::sanitizeForAlipay($itemTitle, AlipayConfig::MAX_SUBJECT_LENGTH);
         }
 
         $siteName = get_bloginfo('name');
-        return sprintf(__('Order from %s', 'wpkj-fluentcart-alipay-payment'), $siteName);
+        $subject = sprintf(__('Order from %s', 'wpkj-fluentcart-alipay-payment'), $siteName);
+        
+        return EncodingService::sanitizeForAlipay($subject, AlipayConfig::MAX_SUBJECT_LENGTH);
     }
 
     /**
@@ -275,12 +297,18 @@ class PaymentProcessor
     {
         $items = [];
         foreach ($order->order_items as $item) {
-            // Use title if available, otherwise use post_title
             $itemTitle = !empty($item->title) ? $item->title : $item->post_title;
+            
+            // Use centralized EncodingService for consistent encoding
+            $itemTitle = EncodingService::ensureUtf8($itemTitle);
+            
             $items[] = $itemTitle . ' x' . $item->quantity;
         }
 
-        return mb_substr(implode(', ', $items), 0, 400, 'UTF-8');
+        $body = implode(', ', $items);
+        
+        // Alipay body max length from config
+        return EncodingService::sanitizeForAlipay($body, AlipayConfig::MAX_BODY_LENGTH);
     }
 
     /**
@@ -413,6 +441,10 @@ class PaymentProcessor
 
         // Sync order statuses
         (new StatusHelper($order))->syncOrderStatuses($transaction);
+        
+        // CRITICAL FIX: Clear cart's order_id to allow repeat purchases
+        // Using centralized OrderService for DRY principle
+        OrderService::clearCartOrderAssociation($order, 'payment_confirmation');
     }
 
     /**

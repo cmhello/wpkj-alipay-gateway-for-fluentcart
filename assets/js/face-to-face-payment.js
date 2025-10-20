@@ -60,7 +60,8 @@
                 dataType: 'json',
                 data: {
                     action: 'wpkj_alipay_check_payment_status',
-                    transaction_uuid: wpkj_alipay_f2f_data.transaction_uuid
+                    transaction_uuid: wpkj_alipay_f2f_data.transaction_uuid,
+                    nonce: wpkj_alipay_f2f_data.nonce
                 },
                 success: function(response) {
                     handleStatusResponse(response);

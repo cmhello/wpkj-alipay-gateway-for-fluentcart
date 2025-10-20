@@ -7,6 +7,7 @@ use FluentCart\App\Models\Order;
 use FluentCart\App\Models\OrderTransaction;
 use WPKJFluentCart\Alipay\API\AlipayAPI;
 use WPKJFluentCart\Alipay\Gateway\AlipaySettingsBase;
+use WPKJFluentCart\Alipay\Services\OrderService;
 use WPKJFluentCart\Alipay\Utils\Helper;
 use WPKJFluentCart\Alipay\Utils\Logger;
 
@@ -59,6 +60,14 @@ class PaymentStatusChecker
     public function checkPaymentStatus()
     {
         try {
+            // Verify nonce for CSRF protection
+            if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'wpkj_alipay_check_status')) {
+                wp_send_json_error([
+                    'message' => __('Security verification failed', 'wpkj-fluentcart-alipay-payment')
+                ], 403);
+                return;
+            }
+            
             $transactionUuid = sanitize_text_field($_POST['transaction_uuid'] ?? '');
 
             if (empty($transactionUuid)) {
@@ -79,6 +88,7 @@ class PaymentStatusChecker
                 return;
             }
 
+            // Check if payment is already completed
             if ($transaction->status === Status::TRANSACTION_SUCCEEDED) {
                 $order = Order::find($transaction->order_id);
                 
@@ -90,7 +100,22 @@ class PaymentStatusChecker
                 return;
             }
 
-            $outTradeNo = Helper::generateOutTradeNo($transaction->uuid);
+            // CRITICAL: Retrieve out_trade_no from transaction meta
+            // DO NOT regenerate it because it contains creation timestamp
+            $outTradeNo = $transaction->meta['out_trade_no'] ?? null;
+            
+            // Fallback: If out_trade_no not in meta (old transactions), try to generate
+            // But this won't work for new timestamp-based out_trade_no format
+            if (empty($outTradeNo)) {
+                Logger::warning('Missing out_trade_no in Transaction Meta', [
+                    'transaction_uuid' => $transaction->uuid,
+                    'transaction_id' => $transaction->id
+                ]);
+                
+                // For backward compatibility, generate without timestamp
+                $outTradeNo = str_replace('-', '', $transaction->uuid);
+            }
+            
             $result = $this->api->queryTrade($outTradeNo);
 
             if (is_wp_error($result)) {
@@ -117,9 +142,9 @@ class PaymentStatusChecker
                         return;
                     }
                     
-                    // Get updated transaction and order
-                    $transaction = OrderTransaction::find($transaction->id);
-                    $order = Order::find($transaction->order_id);
+                    // Reload transaction and order to get updated data
+                    $transaction = $transaction->fresh();
+                    $order = $transaction->order;
                     
                     Logger::info('Face-to-Face Payment Confirmed via Status Check', [
                         'transaction_uuid' => $transaction->uuid,
@@ -264,6 +289,10 @@ class PaymentStatusChecker
 
         // Sync order statuses
         (new \FluentCart\App\Helpers\StatusHelper($order))->syncOrderStatuses($transaction);
+        
+        // CRITICAL FIX: Clear cart's order_id to allow repeat purchases
+        // Using centralized OrderService for DRY principle
+        OrderService::clearCartOrderAssociation($order, 'status_polling');
         
         return true; // Confirmation succeeded
     }

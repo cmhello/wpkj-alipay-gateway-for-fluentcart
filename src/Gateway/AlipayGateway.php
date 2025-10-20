@@ -8,6 +8,7 @@ use FluentCart\App\Helpers\Helper as FluentCartHelper;
 use FluentCart\App\Modules\PaymentMethods\Core\AbstractPaymentGateway;
 use FluentCart\App\Services\Payments\PaymentInstance;
 use FluentCart\Framework\Support\Arr;
+use WPKJFluentCart\Alipay\Config\AlipayConfig;
 use WPKJFluentCart\Alipay\Processor\PaymentProcessor;
 use WPKJFluentCart\Alipay\Webhook\NotifyHandler;
 use WPKJFluentCart\Alipay\Utils\Helper;
@@ -429,17 +430,44 @@ class AlipayGateway extends AbstractPaymentGateway
         try {
             $api = new \WPKJFluentCart\Alipay\API\AlipayAPI($this->settings);
 
-            $outTradeNo = Helper::generateOutTradeNo($transaction->uuid);
+            // CRITICAL: Retrieve out_trade_no from transaction meta
+            // DO NOT regenerate because it contains creation timestamp
+            $outTradeNo = $transaction->meta['out_trade_no'] ?? null;
+            
             $refundAmount = Helper::toDecimal($amount);
             // Use unique ID with random suffix to ensure idempotency
             $outRequestNo = $transaction->uuid . '-manual-' . time() . '-' . substr(md5(uniqid()), 0, 8);
 
-            $result = $api->refund([
-                'out_trade_no' => $outTradeNo,
+            $refundParams = [
                 'refund_amount' => $refundAmount,
                 'out_request_no' => $outRequestNo,
                 'refund_reason' => Arr::get($args, 'reason', 'Customer requested refund')
-            ]);
+            ];
+            
+            // Prefer trade_no over out_trade_no if available
+            if (!empty($transaction->vendor_charge_id)) {
+                $refundParams['trade_no'] = $transaction->vendor_charge_id;
+                Logger::info('Manual Refund Using trade_no', [
+                    'transaction_uuid' => $transaction->uuid,
+                    'trade_no' => $transaction->vendor_charge_id
+                ]);
+            } elseif (!empty($outTradeNo)) {
+                $refundParams['out_trade_no'] = $outTradeNo;
+                Logger::info('Manual Refund Using out_trade_no from Meta', [
+                    'transaction_uuid' => $transaction->uuid,
+                    'out_trade_no' => $outTradeNo
+                ]);
+            } else {
+                // Fallback for old transactions: use old format
+                $outTradeNo = str_replace('-', '', $transaction->uuid);
+                $refundParams['out_trade_no'] = $outTradeNo;
+                Logger::warning('Manual Refund Using Fallback out_trade_no', [
+                    'transaction_uuid' => $transaction->uuid,
+                    'fallback_out_trade_no' => $outTradeNo
+                ]);
+            }
+            
+            $result = $api->refund($refundParams);
 
             if (is_wp_error($result)) {
                 return $result;
@@ -564,10 +592,7 @@ class AlipayGateway extends AbstractPaymentGateway
      */
     public static function getSupportedCurrencies(): array
     {
-        return [
-            'CNY', 'USD', 'EUR', 'GBP', 'HKD', 'JPY', 'KRW', 
-            'SGD', 'AUD', 'CAD', 'CHF', 'NZD', 'THB', 'MYR'
-        ];
+        return AlipayConfig::getSupportedCurrencies();
     }
 
     /**

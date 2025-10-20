@@ -5,6 +5,7 @@ namespace WPKJFluentCart\Alipay\Webhook;
 use FluentCart\App\Models\OrderTransaction;
 use FluentCart\App\Helpers\Status;
 use WPKJFluentCart\Alipay\API\AlipayAPI;
+use WPKJFluentCart\Alipay\Config\AlipayConfig;
 use WPKJFluentCart\Alipay\Gateway\AlipaySettingsBase;
 use WPKJFluentCart\Alipay\Processor\PaymentProcessor;
 use WPKJFluentCart\Alipay\Utils\Helper;
@@ -84,8 +85,8 @@ class NotifyHandler
                 return;
             }
             
-            // Mark this notification as processed (24 hours)
-            set_transient($cacheKey, true, DAY_IN_SECONDS);
+            // Mark this notification as processed (use config TTL)
+            set_transient($cacheKey, true, AlipayConfig::NOTIFY_DEDUP_TTL);
         }
 
         // Verify signature
@@ -212,13 +213,34 @@ class NotifyHandler
     /**
      * Parse out_trade_no to get transaction UUID
      * 
+     * Supports two formats:
+     * 1. New format (with timestamp): {uuid_without_dashes}_{timestamp_microseconds}
+     *    Example: 6a3f5c2e7b1d4a9e8f0c1d2e3f4a5b6c_17050123456789012
+     * 2. Old format (without timestamp): {uuid_without_dashes}
+     *    Example: 6a3f5c2e7b1d4a9e8f0c1d2e3f4a5b6c
+     * 
      * @param string $outTradeNo Out trade number
      * @return string Transaction UUID
      */
     private function parseOutTradeNo($outTradeNo)
     {
-        // out_trade_no is UUID without dashes, restore the dashes
-        // Format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        // Check if new format (contains underscore)
+        if (strpos($outTradeNo, '_') !== false) {
+            // Extract UUID part before underscore
+            $parts = explode('_', $outTradeNo);
+            $uuidPart = $parts[0];
+            
+            // Restore UUID format with dashes
+            if (strlen($uuidPart) === 32) {
+                return substr($uuidPart, 0, 8) . '-' .
+                       substr($uuidPart, 8, 4) . '-' .
+                       substr($uuidPart, 12, 4) . '-' .
+                       substr($uuidPart, 16, 4) . '-' .
+                       substr($uuidPart, 20);
+            }
+        }
+        
+        // Old format (32 chars without timestamp)
         if (strlen($outTradeNo) === 32) {
             return substr($outTradeNo, 0, 8) . '-' .
                    substr($outTradeNo, 8, 4) . '-' .
@@ -227,6 +249,12 @@ class NotifyHandler
                    substr($outTradeNo, 20);
         }
 
+        // Unknown format, log warning and return as-is
+        Logger::warning('Unknown out_trade_no Format', [
+            'out_trade_no' => $outTradeNo,
+            'length' => strlen($outTradeNo)
+        ]);
+        
         return $outTradeNo;
     }
 

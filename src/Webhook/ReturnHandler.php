@@ -106,8 +106,18 @@ class ReturnHandler
     private function queryAndUpdatePaymentStatus($transaction)
     {
         try {
-            // Generate out_trade_no
-            $outTradeNo = Helper::generateOutTradeNo($transaction->uuid);
+            // CRITICAL: Retrieve out_trade_no from transaction meta
+            // DO NOT regenerate because it contains creation timestamp
+            $outTradeNo = $transaction->meta['out_trade_no'] ?? null;
+            
+            // Fallback for old transactions without stored out_trade_no
+            if (empty($outTradeNo)) {
+                Logger::warning('Missing out_trade_no in transaction meta, using fallback', [
+                    'transaction_uuid' => $transaction->uuid
+                ]);
+                // Use old format (without timestamp) for backward compatibility
+                $outTradeNo = str_replace('-', '', $transaction->uuid);
+            }
 
             // Query trade status
             $result = $this->api->queryTrade($outTradeNo);

@@ -180,6 +180,7 @@ class FaceToFacePageHandler
                 'order_uuid' => $order->uuid,
                 'qr_code' => $qrCode,
                 'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('wpkj_alipay_check_status'),
                 'i18n' => $i18n
             ]
         );

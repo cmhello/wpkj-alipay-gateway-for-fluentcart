@@ -77,13 +77,27 @@ class Helper
     /**
      * Generate out_trade_no (order number for Alipay)
      * 
+     * IMPORTANT: Alipay requires out_trade_no to be unique for each payment attempt.
+     * Even if it's the same product/customer, each payment must have a unique out_trade_no.
+     * 
+     * Format: {transaction_uuid_without_dashes}_{timestamp_microseconds}
+     * This ensures absolute uniqueness even for rapid repeated orders.
+     * 
      * @param string $transactionUuid Transaction UUID
-     * @return string
+     * @return string Unique trade number (max 64 chars)
      */
     public static function generateOutTradeNo($transactionUuid)
     {
-        // Remove dashes from UUID to make it shorter
-        return str_replace('-', '', $transactionUuid);
+        // Remove dashes from UUID (32 chars)
+        $baseUuid = str_replace('-', '', $transactionUuid);
+        
+        // Add microsecond timestamp to ensure uniqueness (17 chars)
+        // This prevents duplicate out_trade_no even if transaction UUID is somehow reused
+        $uniqueSuffix = microtime(true) * 10000; // Convert to integer to avoid decimals
+        $uniqueSuffix = substr(str_replace('.', '', (string)$uniqueSuffix), 0, 17);
+        
+        // Total length: 32 + 1 + 17 = 50 chars (well under Alipay's 64 char limit)
+        return $baseUuid . '_' . $uniqueSuffix;
     }
 
     /**
