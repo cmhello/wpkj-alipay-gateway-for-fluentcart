@@ -144,21 +144,34 @@ class AlipayAPI
                 $orderData['notify_url']
             );
 
+            Logger::info('Sending Face-to-Face Payment Request', [
+                'gateway_url' => $this->config['gateway_url'],
+                'out_trade_no' => $orderData['out_trade_no'],
+                'mode' => $this->settings->getMode()
+            ]);
+
             $response = wp_remote_post($this->config['gateway_url'], [
                 'body' => $params,
                 'timeout' => 30,
             ]);
 
             if (is_wp_error($response)) {
+                Logger::error('WP_Error in Face-to-Face Request', [
+                    'error_code' => $response->get_error_code(),
+                    'error_message' => $response->get_error_message()
+                ]);
                 return $response;
             }
 
             $httpCode = wp_remote_retrieve_response_code($response);
             if ($httpCode !== 200) {
+                $responseBody = wp_remote_retrieve_body($response);
                 Logger::error('HTTP Request Failed', [
                     'http_code' => $httpCode,
                     'method' => 'precreate',
-                    'out_trade_no' => $orderData['out_trade_no']
+                    'out_trade_no' => $orderData['out_trade_no'],
+                    'gateway_url' => $this->config['gateway_url'],
+                    'response_body' => substr($responseBody, 0, 500)
                 ]);
                 return new \WP_Error(
                     'alipay_http_error',
@@ -191,7 +204,8 @@ class AlipayAPI
             if (!isset($result[$responseKey])) {
                 Logger::error('Invalid Precreate Response Structure', [
                     'out_trade_no' => $orderData['out_trade_no'],
-                    'response_keys' => array_keys($result)
+                    'response_keys' => array_keys($result),
+                    'response_body' => substr($body, 0, 1000)
                 ]);
                 return new \WP_Error(
                     'alipay_precreate_error',
@@ -642,13 +656,19 @@ class AlipayAPI
                 return new \WP_Error('alipay_query_error', __('Empty response from Alipay', 'wpkj-fluentcart-alipay-payment'));
             }
 
+            // Ensure UTF-8 encoding to prevent JSON decode errors
+            if (!mb_check_encoding($body, 'UTF-8')) {
+                $body = mb_convert_encoding($body, 'UTF-8', 'UTF-8');
+            }
+
             $result = json_decode($body, true);
             $jsonError = json_last_error();
 
             if ($jsonError !== JSON_ERROR_NONE) {
                 Logger::error('JSON Decode Error', [
                     'error' => json_last_error_msg(),
-                    'error_code' => $jsonError
+                    'error_code' => $jsonError,
+                    'body_preview' => substr($body, 0, 200)
                 ]);
                 return new \WP_Error(
                     'alipay_query_error',

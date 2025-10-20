@@ -155,22 +155,28 @@ class PaymentProcessor
                 'amount' => $paymentData['total_amount']
             ]);
 
+            // Build direct QR code page URL (NOT using custom_checkout)
+            $qrPageUrl = home_url('/');
+            $qrPageUrl = add_query_arg([
+                'fluent-cart' => 'alipay_f2f_payment',
+                'order_hash' => $order->uuid,
+                'qr_code' => base64_encode($result['qr_code']),
+                'trx_uuid' => $transaction->uuid
+            ], $qrPageUrl);
+
+            Logger::info('Face-to-Face Payment Redirect URL', [
+                'redirect_to' => $qrPageUrl,
+                'order_uuid' => $order->uuid,
+                'transaction_uuid' => $transaction->uuid,
+                'has_qr_code' => !empty($result['qr_code'])
+            ]);
+
+            // Return the same format as COD gateway:
+            // redirect_to should be the direct URL string
             return [
                 'status' => 'success',
-                'nextAction' => 'qrcode',
-                'actionName' => 'qrcode',
-                'message' => __('Please scan the QR code with Alipay app to complete payment', 'wpkj-fluentcart-alipay-payment'),
-                'data' => [
-                    'order' => [
-                        'uuid' => $order->uuid,
-                    ],
-                    'transaction' => [
-                        'uuid' => $transaction->uuid,
-                    ],
-                    'qr_code' => $result['qr_code'],
-                    'payment_method' => 'face_to_face'
-                ],
-                'custom_payment_url' => PaymentHelper::getCustomPaymentLink($order->uuid)
+                'message' => __('Redirecting to payment page...', 'wpkj-fluentcart-alipay-payment'),
+                'redirect_to' => $qrPageUrl
             ];
 
         } catch (\Exception $e) {
@@ -249,7 +255,10 @@ class PaymentProcessor
         
         if (count($items) === 1) {
             $item = $items[0];
-            return mb_substr($item->post_title . ' ' . $item->title, 0, 256);
+            // Use title if available, otherwise use post_title
+            // Don't concatenate both to avoid duplication
+            $itemTitle = !empty($item->title) ? $item->title : $item->post_title;
+            return mb_substr($itemTitle, 0, 256, 'UTF-8');
         }
 
         $siteName = get_bloginfo('name');
@@ -266,10 +275,12 @@ class PaymentProcessor
     {
         $items = [];
         foreach ($order->order_items as $item) {
-            $items[] = $item->post_title . ' x' . $item->quantity;
+            // Use title if available, otherwise use post_title
+            $itemTitle = !empty($item->title) ? $item->title : $item->post_title;
+            $items[] = $itemTitle . ' x' . $item->quantity;
         }
 
-        return mb_substr(implode(', ', $items), 0, 400);
+        return mb_substr(implode(', ', $items), 0, 400, 'UTF-8');
     }
 
     /**

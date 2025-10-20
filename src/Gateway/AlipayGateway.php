@@ -84,25 +84,6 @@ class AlipayGateway extends AbstractPaymentGateway
             $returnHandler = new \WPKJFluentCart\Alipay\Webhook\ReturnHandler();
             $returnHandler->handleReturn();
         }
-
-        if ($this->settings->get('enable_face_to_face_pc') === 'yes') {
-            add_action('wp_enqueue_scripts', [$this, 'enqueueFaceToFaceStyles']);
-        }
-    }
-
-    /**
-     * Enqueue face-to-face payment styles
-     * 
-     * @return void
-     */
-    public function enqueueFaceToFaceStyles()
-    {
-        wp_enqueue_style(
-            'wpkj-fc-alipay-f2f-styles',
-            WPKJ_FC_ALIPAY_URL . 'assets/css/face-to-face-payment.css',
-            [],
-            WPKJ_FC_ALIPAY_VERSION
-        );
     }
 
     /**
@@ -597,23 +578,13 @@ class AlipayGateway extends AbstractPaymentGateway
      */
     public function getEnqueueScriptSrc($hasSubscription = 'no'): array
     {
-        $scripts = [
+        return [
             [
                 'handle' => 'wpkj-fc-alipay-checkout',
                 'src' => WPKJ_FC_ALIPAY_URL . 'assets/js/alipay-checkout.js',
                 'deps' => ['jquery']
             ]
         ];
-
-        if ($this->settings->get('enable_face_to_face_pc') === 'yes') {
-            $scripts[] = [
-                'handle' => 'wpkj-fc-alipay-f2f',
-                'src' => WPKJ_FC_ALIPAY_URL . 'assets/js/face-to-face-payment.js',
-                'deps' => ['jquery', 'wpkj-fc-alipay-checkout']
-            ];
-        }
-
-        return $scripts;
     }
 
     /**
@@ -628,22 +599,10 @@ class AlipayGateway extends AbstractPaymentGateway
             ? $customDescription 
             : __('Pay securely with Alipay - Support PC, Mobile WAP, and In-App payments', 'wpkj-fluentcart-alipay-payment');
         
-        $localizeData = [
+        return [
             'wpkj_fc_alipay_data' => [
                 'description' => $description
             ]
         ];
-
-        if ($this->settings->get('enable_face_to_face_pc') === 'yes') {
-            $localizeData['wpkj_alipay_f2f_i18n'] = [
-                'scan_title' => __('Scan QR Code to Pay with Alipay', 'wpkj-fluentcart-alipay-payment'),
-                'waiting_payment' => __('Waiting for payment...', 'wpkj-fluentcart-alipay-payment'),
-                'payment_success' => __('Payment successful! Redirecting...', 'wpkj-fluentcart-alipay-payment'),
-                'payment_failed' => __('Payment failed', 'wpkj-fluentcart-alipay-payment'),
-                'payment_timeout' => __('Payment timeout, please refresh and try again', 'wpkj-fluentcart-alipay-payment')
-            ];
-        }
-
-        return $localizeData;
     }
 }

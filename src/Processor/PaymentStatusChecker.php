@@ -105,10 +105,32 @@ class PaymentStatusChecker
                 $tradeStatus = $result['trade_status'];
 
                 if ($tradeStatus === 'TRADE_SUCCESS' || $tradeStatus === 'TRADE_FINISHED') {
+                    // Process payment confirmation immediately
+                    $confirmed = $this->processPaymentConfirmation($transaction, $result);
+                    
+                    if (!$confirmed) {
+                        // Confirmation failed (amount mismatch, etc.), continue waiting
+                        wp_send_json_success([
+                            'status' => 'waiting',
+                            'message' => __('Payment verification in progress...', 'wpkj-fluentcart-alipay-payment')
+                        ]);
+                        return;
+                    }
+                    
+                    // Get updated transaction and order
+                    $transaction = OrderTransaction::find($transaction->id);
+                    $order = Order::find($transaction->order_id);
+                    
+                    Logger::info('Face-to-Face Payment Confirmed via Status Check', [
+                        'transaction_uuid' => $transaction->uuid,
+                        'order_id' => $order->id,
+                        'trade_status' => $tradeStatus
+                    ]);
+                    
                     wp_send_json_success([
                         'status' => 'paid',
-                        'message' => __('Payment completed', 'wpkj-fluentcart-alipay-payment'),
-                        'needs_verification' => true
+                        'message' => __('Payment completed successfully', 'wpkj-fluentcart-alipay-payment'),
+                        'redirect_url' => $this->getReceiptUrl($order)
                     ]);
                     return;
                 } elseif ($tradeStatus === 'TRADE_CLOSED') {
@@ -152,8 +174,97 @@ class PaymentStatusChecker
             $receiptPage = home_url('/?fluent-cart=receipt');
         }
 
+        // FluentCart receipt page expects 'order_hash' parameter, not 'order_uuid'
         return add_query_arg([
-            'order_uuid' => $order->uuid
+            'order_hash' => $order->uuid
         ], $receiptPage);
+    }
+
+    /**
+     * Process payment confirmation
+     * 
+     * @param OrderTransaction $transaction Transaction instance
+     * @param array $tradeData Trade data from Alipay
+     * @return bool True if confirmation succeeded, false otherwise
+     */
+    private function processPaymentConfirmation($transaction, $tradeData)
+    {
+        // Check if already processed
+        if ($transaction->status === Status::TRANSACTION_SUCCEEDED) {
+            Logger::info('Transaction Already Completed', [
+                'transaction_uuid' => $transaction->uuid
+            ]);
+            return true; // Already processed, consider it success
+        }
+
+        $order = Order::find($transaction->order_id);
+        if (!$order) {
+            Logger::error('Order Not Found for Payment Confirmation', [
+                'transaction_id' => $transaction->id,
+                'order_id' => $transaction->order_id
+            ]);
+            return false;
+        }
+
+        // Verify amount if available
+        if (isset($tradeData['total_amount'])) {
+            $totalAmount = Helper::toCents($tradeData['total_amount']);
+            $expectedAmount = (int)$transaction->total;
+            $receivedAmount = (int)$totalAmount;
+            
+            if ($expectedAmount !== $receivedAmount) {
+                Logger::error('Amount Mismatch in Status Check', [
+                    'expected' => $expectedAmount,
+                    'received' => $receivedAmount,
+                    'transaction_uuid' => $transaction->uuid,
+                    'trade_no' => $tradeData['trade_no'] ?? 'N/A'
+                ]);
+                return false; // Amount mismatch, reject confirmation
+            }
+        }
+
+        // Update transaction
+        $transactionUpdateData = [
+            'vendor_charge_id' => $tradeData['trade_no'] ?? '',
+            'payment_method' => 'alipay',
+            'status' => Status::TRANSACTION_SUCCEEDED,
+            'payment_method_type' => 'Alipay Face-to-Face',
+            'meta' => array_merge($transaction->meta ?? [], [
+                'alipay_trade_no' => $tradeData['trade_no'] ?? '',
+                'buyer_logon_id' => $tradeData['buyer_logon_id'] ?? '',
+                'buyer_user_id' => $tradeData['buyer_user_id'] ?? '',
+                'payment_time' => $tradeData['send_pay_date'] ?? '',
+                'trade_status' => $tradeData['trade_status'] ?? '',
+                'confirmed_via' => 'status_polling'
+            ])
+        ];
+
+        $transaction->fill($transactionUpdateData);
+        $transaction->save();
+
+        Logger::info('Payment Confirmed via Polling', [
+            'transaction_uuid' => $transaction->uuid,
+            'trade_no' => $tradeData['trade_no'] ?? 'N/A',
+            'trade_status' => $tradeData['trade_status'] ?? 'N/A'
+        ]);
+
+        // Add log to order activity
+        fluent_cart_add_log(
+            __('Alipay Face-to-Face Payment Confirmed', 'wpkj-fluentcart-alipay-payment'),
+            sprintf(
+                __('Payment confirmed via status polling. Trade No: %s', 'wpkj-fluentcart-alipay-payment'),
+                $tradeData['trade_no'] ?? 'N/A'
+            ),
+            'info',
+            [
+                'module_name' => 'order',
+                'module_id' => $order->id,
+            ]
+        );
+
+        // Sync order statuses
+        (new \FluentCart\App\Helpers\StatusHelper($order))->syncOrderStatuses($transaction);
+        
+        return true; // Confirmation succeeded
     }
 }

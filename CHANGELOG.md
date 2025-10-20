@@ -7,56 +7,68 @@ All notable changes to WPKJ FluentCart Alipay Payment will be documented in this
 ### ✨ New Features
 - **Face-to-Face Payment Support** - Added QR code scan payment for PC/Desktop users
   - New payment method: `alipay.trade.precreate` (Face-to-Face)
-  - Automatic QR code generation and display
+  - Dedicated payment page with professional UI
   - Real-time payment status polling (3s interval, max 10 minutes)
   - Graceful timeout handling with user feedback
   - Fully compatible with existing payment methods (WAP, APP)
 
+### 🐛 Bug Fixes
+- **Fixed Test Mode Face-to-Face Payment** - Resolved "订单处理中" stuck issue
+  - Changed from custom `nextAction` to standard `redirect_to` approach
+  - Created dedicated payment page handler (FaceToFacePageHandler)
+  - Integrated with FluentCart's custom checkout flow
+  - QR code passed via URL parameter (base64 encoded)
+  - Payment status polling now works correctly in Test mode
+
 ### 🌐 Internationalization
-- **JavaScript Localization** - All JavaScript strings now support i18n
-  - Scan QR code title
-  - Waiting for payment message
-  - Payment success/failed/timeout messages
-  - Localized strings passed via `wp_localize_script()`
-  - Ready for translation into any language
+- **Full i18n Support** - All user-facing text now supports translation
+  - Payment page fully translatable
+  - All messages support WordPress translation system
+  - Ready for multi-language sites
 
 ### ⚙️ Configuration
 - **New Admin Setting** - "PC Face-to-Face Payment" option
   - Enable/disable QR code payment for desktop users
   - Default: Disabled (uses traditional page redirect)
-  - When enabled: PC users see QR code instead of redirect
+  - When enabled: PC users redirected to QR code payment page
   - Mobile users always use WAP payment (unchanged)
 
 ### 🎨 User Interface
-- **QR Code Display** - Professional payment UI
+- **Professional Payment Page** - Dedicated QR code payment interface
   - Responsive design (works on all screen sizes)
-  - Loading animation while generating QR code
+  - Order information display (order number, amount)
   - Real-time status updates (waiting/success/failed)
   - Auto-redirect on successful payment
-  - Supports QRCode.js library or Google Charts API fallback
+  - Clean, modern UI with branded header
+  - QR code generated via Google Charts API
 
 ### 🔧 Technical Improvements
 - **New Classes**:
+  - `FaceToFacePageHandler` - Handles custom payment page rendering
   - `PaymentStatusChecker` - AJAX handler for status polling
-  - Enhanced `ClientDetector` - Supports settings-based method selection
-  - Enhanced `AlipayAPI` - New `createFaceToFacePayment()` method
-  - Enhanced `PaymentProcessor` - Routes to F2F or traditional payment
+  - Enhanced `PaymentProcessor` - Routes to F2F payment with redirect
+  - Enhanced `AlipayAPI` - `createFaceToFacePayment()` method
 
-- **New Files**:
-  - `assets/js/face-to-face-payment.js` - Frontend payment handler
-  - `assets/css/face-to-face-payment.css` - Payment UI styles
-  - `src/Processor/PaymentStatusChecker.php` - Status polling API
+- **Architecture Changes**:
+  - Removed complex frontend JS event handling
+  - Simplified to standard FluentCart redirect flow
+  - All payment logic on dedicated page
+  - Inline JavaScript for better performance
+  - Self-contained payment page with minimal dependencies
 
 ### 🧹 Code Quality
-- Removed all Chinese strings from JavaScript files
-- Added proper i18n support for all user-facing text
-- Cleaned up test and debug files
-- Improved code documentation and comments
+- Removed unnecessary JavaScript files (face-to-face-payment.js)
+- Removed redundant CSS files (face-to-face-payment.css)
+- All styles and scripts now inline on payment page
+- Improved code documentation
+- Better error handling and logging
+- Cleaner separation of concerns
 
 ### 🔄 Compatibility
 - Fully backward compatible with v1.0.2
 - Works with existing auto-refund feature
 - Compatible with all FluentCart payment flows
+- Supports both Test and Live modes
 - No breaking changes
 
 ---

@@ -108,6 +108,9 @@ function wpkj_fc_alipay_bootstrap() {
         $statusChecker = new \WPKJFluentCart\Alipay\Processor\PaymentStatusChecker();
         $statusChecker->register();
         
+        $f2fPageHandler = new \WPKJFluentCart\Alipay\Processor\FaceToFacePageHandler();
+        $f2fPageHandler->register();
+        
     }, 9);
 }
 add_action('plugins_loaded', 'wpkj_fc_alipay_bootstrap', 20);
