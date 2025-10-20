@@ -2,6 +2,70 @@
 
 All notable changes to WPKJ FluentCart Alipay Payment will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.1.0] - 2025-10-20
+
+### Added
+- **Subscription Support**: Full integration with FluentCart subscription features
+  - `AlipaySubscriptions` class for subscription lifecycle management
+  - `AlipaySubscriptionProcessor` for subscription payment processing
+  - Subscription payment notification handling in `NotifyHandler`
+  - Support for setup fees and trial periods
+  - Support for multiple billing intervals (day, week, month, year)
+  - Support for limited and unlimited billing cycles
+  - Automatic subscription status synchronization
+  - Subscription cancellation and reactivation
+  - Billing count tracking and next billing date calculation
+
+### Changed
+- Updated `AlipayGateway` to support subscription payments
+- Extended `NotifyHandler` to handle subscription payment callbacks
+- Added `subscriptions` to supported features array
+- Updated plugin description to include subscription support
+
+### Documentation
+- Added `SUBSCRIPTION_SUPPORT.md` with complete subscription implementation guide
+- Updated `README.md` with subscription features section
+- Added subscription workflow diagrams and testing guide
+
+### Technical Details
+- Payment amount calculation based on order type (initial/renewal)
+- Vendor subscription ID generation for local tracking
+- Subscription payment metadata in transactions
+- Automatic next billing date calculation
+- Support for subscription completion on reaching max billing cycles
+
+## [1.0.4] - 2025-01-15
+
+### Added
+- Initial release with one-time payment support
+- Multi-platform support (PC Web, Mobile WAP, Face-to-Face, App)
+- Auto-refund feature
+- RSA2 signature encryption
+- Webhook support
+- Manual refund from admin panel
+- Test mode with sandbox environment
+- Multi-currency support (14+ currencies)
+- Client auto-detection
+- Comprehensive logging system
+
+### Security
+- CSRF protection with WordPress nonce
+- UUID format validation
+- SQL injection prevention
+- Replay attack protection
+- Signature verification for all notifications
+
+### Performance
+- Query result caching (5 seconds TTL)
+- Notification deduplication
+- Environment-aware log level control
+
+[1.1.0]: https://github.com/wpdaxue/wpkj-fluentcart-alipay-payment/compare/v1.0.4...v1.1.0
+[1.0.4]: https://github.com/wpdaxue/wpkj-fluentcart-alipay-payment/releases/tag/v1.0.4
+
 ## [1.0.3] - 2025-10-20
 
 ### ✨ New Features

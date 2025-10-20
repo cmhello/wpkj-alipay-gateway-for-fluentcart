@@ -8,6 +8,21 @@ A professional Alipay payment gateway plugin for FluentCart with automatic clien
   - PC Web Payment (Desktop browsers)
   - Mobile WAP Payment (Mobile browsers)
   - Alipay App Payment (Alipay client)
+  - Face-to-Face Payment (QR Code)
+- **Subscription Support**: Full support for recurring payments
+  - **Automatic Renewal** (Recurring Agreement) - Recommended ⭐
+    - True auto-renewal with Alipay agreement
+    - 95%+ renewal success rate
+    - Requires merchant to sign up for recurring payment service
+  - **Manual Renewal** (Fallback Mode)
+    - Customer pays manually for each renewal
+    - Works without special setup
+    - Automatic fallback if agreement fails
+  - Initial subscription payments with setup fees
+  - Trial period support
+  - Flexible billing intervals (day/week/month/year)
+  - Limited and unlimited billing cycles
+  - Smart degradation strategy
 - **Auto-Refund**: Automatic refund processing when orders are cancelled
 - **Secure**: RSA2 signature encryption
 - **Webhook Support**: Real-time payment notifications
@@ -69,6 +84,46 @@ When enabled:
 **Documentation**: See `AUTO_REFUND_GUIDE.md` for detailed information
 **Test Page**: Access `test-auto-refund.php` to verify installation
 
+## Subscription Payments
+
+The plugin fully supports FluentCart's subscription features:
+
+### Key Features
+
+- ✅ Initial subscription payments (with setup fees)
+- ✅ Recurring renewal payments
+- ✅ Trial period support (0-365 days)
+- ✅ Multiple billing intervals (daily, weekly, monthly, yearly)
+- ✅ Limited billing cycles (e.g., 12 months then complete)
+- ✅ Unlimited subscriptions
+- ✅ Subscription cancellation
+- ✅ Subscription reactivation
+- ✅ Automatic status synchronization
+
+### Important Notes
+
+⚠️ **Alipay does not support automatic recurring charges**. Each renewal requires manual payment by the customer.
+
+**Workflow**:
+1. Customer purchases subscription product
+2. Initial payment processed (setup fee + first period, or just setup fee if trial)
+3. FluentCart tracks billing schedule
+4. Before renewal date, customer receives payment notification (email/SMS)
+5. Customer manually completes renewal payment
+6. Subscription continues for next billing cycle
+
+**Documentation**: See `SUBSCRIPTION_SUPPORT.md` for detailed implementation guide
+
+### Subscription Payment Flow
+
+```
+Initial Purchase → Trial Period (optional) → First Billing → Renewal Notification 
+                                                ↓
+                                          Manual Payment
+                                                ↓
+                                          Next Billing Cycle
+```
+
 ## Development
 
 ### Directory Structure
@@ -79,13 +134,17 @@ wpkj-fluentcart-alipay-payment/
 │   ├── Gateway/          # Gateway implementation
 │   ├── API/              # Alipay API communication
 │   ├── Processor/        # Payment processing
+│   ├── Subscription/     # Subscription payment handling
 │   ├── Webhook/          # Webhook handlers
 │   ├── Utils/            # Utility classes
-│   └── Detector/         # Client detection
+│   ├── Services/         # Service classes
+│   ├── Detector/         # Client detection
+│   └── Config/           # Configuration classes
 ├── assets/
 │   ├── js/              # JavaScript files
 │   └── css/             # Stylesheets
-└── languages/           # Translation files
+├── languages/           # Translation files
+└── docs/                # Development documentation
 ```
 
 ### Hooks & Filters

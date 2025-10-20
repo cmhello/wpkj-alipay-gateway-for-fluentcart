@@ -21,6 +21,16 @@ class AlipayConfig
      */
     
     /**
+     * Minimum payment amount (in cents)
+     * 
+     * Alipay requires minimum 0.01 CNY (1 cent) for payment.
+     * This prevents invalid zero-amount payments.
+     * 
+     * @var int
+     */
+    const MIN_PAYMENT_AMOUNT_CENTS = 1;
+    
+    /**
      * Maximum single transaction amount limit (CNY)
      * 
      * Alipay enforces this limit on all payment requests.

@@ -57,6 +57,26 @@ class ClientDetector
     }
 
     /**
+     * Detect client type
+     * 
+     * Returns simplified client type string for payment routing
+     * 
+     * @return string 'alipay'|'mobile'|'pc'
+     */
+    public static function detect(): string
+    {
+        if (self::isAlipayClient()) {
+            return 'alipay';
+        }
+        
+        if (self::isMobile()) {
+            return 'mobile';
+        }
+        
+        return 'pc';
+    }
+
+    /**
      * Get appropriate payment method based on client environment
      * 
      * @param AlipaySettingsBase|null $settings Settings instance (optional)

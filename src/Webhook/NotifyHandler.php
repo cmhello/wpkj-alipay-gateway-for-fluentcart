@@ -3,11 +3,13 @@
 namespace WPKJFluentCart\Alipay\Webhook;
 
 use FluentCart\App\Models\OrderTransaction;
+use FluentCart\App\Models\Subscription;
 use FluentCart\App\Helpers\Status;
 use WPKJFluentCart\Alipay\API\AlipayAPI;
 use WPKJFluentCart\Alipay\Config\AlipayConfig;
 use WPKJFluentCart\Alipay\Gateway\AlipaySettingsBase;
 use WPKJFluentCart\Alipay\Processor\PaymentProcessor;
+use WPKJFluentCart\Alipay\Subscription\AlipayRecurringAgreement;
 use WPKJFluentCart\Alipay\Utils\Helper;
 use WPKJFluentCart\Alipay\Utils\Logger;
 
@@ -40,6 +42,13 @@ class NotifyHandler
     private $processor;
 
     /**
+     * Recurring agreement instance
+     * 
+     * @var AlipayRecurringAgreement
+     */
+    private $recurring;
+
+    /**
      * Constructor
      */
     public function __construct()
@@ -47,6 +56,7 @@ class NotifyHandler
         $this->settings = new AlipaySettingsBase();
         $this->api = new AlipayAPI($this->settings);
         $this->processor = new PaymentProcessor($this->settings);
+        $this->recurring = new AlipayRecurringAgreement($this->settings);
     }
 
     /**
@@ -69,6 +79,13 @@ class NotifyHandler
         $data = Helper::sanitizeResponseData($data);
 
         Logger::info('Notify Received', $data);
+
+        // 检查是否为协议签约回调
+        $action = $_GET['action'] ?? '';
+        if ($action === 'agreement') {
+            $this->processAgreementNotify($data);
+            return;
+        }
 
         // Check for replay attack using notify_id
         $notifyId = $data['notify_id'] ?? '';
@@ -152,8 +169,18 @@ class NotifyHandler
             return;
         }
 
-        // Process payment confirmation
-        $this->processor->confirmPaymentSuccess($transaction, $data);
+        // Check if this is a subscription payment
+        if ($this->isSubscriptionTransaction($transaction)) {
+            Logger::info('Processing Subscription Payment Success', [
+                'transaction_uuid' => $transaction->uuid,
+                'trade_no' => $data['trade_no'] ?? ''
+            ]);
+            
+            $this->handleSubscriptionPaymentSuccess($transaction, $data);
+        } else {
+            // Regular payment processing
+            $this->processor->confirmPaymentSuccess($transaction, $data);
+        }
     }
 
     /**
@@ -269,5 +296,127 @@ class NotifyHandler
         // Alipay expects simple text response
         echo $result;
         exit;
+    }
+
+    /**
+     * Check if transaction is for a subscription
+     * 
+     * @param OrderTransaction $transaction
+     * @return bool
+     */
+    private function isSubscriptionTransaction($transaction)
+    {
+        // Check transaction meta
+        if (isset($transaction->meta['is_subscription']) && $transaction->meta['is_subscription']) {
+            return true;
+        }
+
+        // Check if order has subscription
+        $order = $transaction->order;
+        if ($order && $order->subscription_id) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Handle subscription payment success
+     * 
+     * @param OrderTransaction $transaction
+     * @param array $data Notification data
+     * @return void
+     */
+    private function handleSubscriptionPaymentSuccess($transaction, $data)
+    {
+        // First, confirm the payment
+        $this->processor->confirmPaymentSuccess($transaction, $data);
+
+        // Get subscription
+        $subscriptionId = $transaction->meta['subscription_id'] ?? $transaction->order->subscription_id ?? null;
+        
+        if (!$subscriptionId) {
+            Logger::warning('Subscription ID Not Found in Transaction', [
+                'transaction_uuid' => $transaction->uuid
+            ]);
+            return;
+        }
+
+        $subscription = Subscription::find($subscriptionId);
+        
+        if (!$subscription) {
+            Logger::error('Subscription Not Found', [
+                'subscription_id' => $subscriptionId,
+                'transaction_uuid' => $transaction->uuid
+            ]);
+            return;
+        }
+
+        // Update subscription status
+        if ($subscription->status !== Status::SUBSCRIPTION_ACTIVE) {
+            $subscription->status = Status::SUBSCRIPTION_ACTIVE;
+            $subscription->save();
+
+            Logger::info('Subscription Activated', [
+                'subscription_id' => $subscription->id,
+                'transaction_uuid' => $transaction->uuid
+            ]);
+        }
+
+        // Increment bill count for renewals
+        if ($transaction->order->type === 'renewal') {
+            $subscription->bill_count = ($subscription->bill_count ?? 0) + 1;
+            
+            // Calculate next billing date
+            $interval = $subscription->billing_interval;
+            $nextBillingDate = date('Y-m-d H:i:s', strtotime("+1 {$interval}"));
+            
+            // Check if subscription should complete (limited billing cycles)
+            if ($subscription->bill_times > 0 && $subscription->bill_count >= $subscription->bill_times) {
+                $subscription->status = Status::SUBSCRIPTION_COMPLETED;
+                $subscription->next_billing_date = null;
+                
+                Logger::info('Subscription Completed (Max Billing Cycles Reached)', [
+                    'subscription_id' => $subscription->id,
+                    'bill_count' => $subscription->bill_count,
+                    'bill_times' => $subscription->bill_times
+                ]);
+            } else {
+                $subscription->next_billing_date = $nextBillingDate;
+                
+                Logger::info('Next Billing Date Updated', [
+                    'subscription_id' => $subscription->id,
+                    'next_billing_date' => $nextBillingDate,
+                    'bill_count' => $subscription->bill_count
+                ]);
+            }
+            
+            $subscription->save();
+        }
+    }
+
+    /**
+     * Process agreement sign notification
+     * 
+     * @param array $data
+     * @return void
+     */
+    private function processAgreementNotify($data)
+    {
+        // Verify signature
+        if (!$this->verifyNotification($data)) {
+            Logger::error('Agreement Notify Signature Verification Failed', $data);
+            $this->sendResponse('fail');
+            return;
+        }
+
+        // Process agreement callback
+        $result = $this->recurring->handleAgreementCallback($data);
+
+        if ($result) {
+            $this->sendResponse('success');
+        } else {
+            $this->sendResponse('fail');
+        }
     }
 }

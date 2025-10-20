@@ -5,6 +5,7 @@ namespace WPKJFluentCart\Alipay\Processor;
 use FluentCart\App\Helpers\Status;
 use FluentCart\App\Models\Order;
 use FluentCart\App\Models\OrderTransaction;
+use FluentCart\App\Models\Subscription;
 use WPKJFluentCart\Alipay\API\AlipayAPI;
 use WPKJFluentCart\Alipay\Gateway\AlipaySettingsBase;
 use WPKJFluentCart\Alipay\Services\OrderService;
@@ -294,6 +295,112 @@ class PaymentStatusChecker
         // Using centralized OrderService for DRY principle
         OrderService::clearCartOrderAssociation($order, 'status_polling');
         
+        // CRITICAL: Handle subscription status update
+        if ($this->isSubscriptionTransaction($transaction)) {
+            Logger::info('Processing Subscription Payment via Polling', [
+                'transaction_uuid' => $transaction->uuid,
+                'trade_no' => $tradeData['trade_no'] ?? ''
+            ]);
+            
+            $this->handleSubscriptionPaymentSuccess($transaction, $tradeData);
+        }
+        
         return true; // Confirmation succeeded
+    }
+
+    /**
+     * Check if transaction is for a subscription
+     * 
+     * @param OrderTransaction $transaction
+     * @return bool
+     */
+    private function isSubscriptionTransaction($transaction)
+    {
+        // Check transaction meta
+        if (isset($transaction->meta['is_subscription']) && $transaction->meta['is_subscription']) {
+            return true;
+        }
+
+        // Check if order has subscription
+        $order = $transaction->order;
+        if ($order && $order->subscription_id) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Handle subscription payment success
+     * 
+     * @param OrderTransaction $transaction
+     * @param array $data Payment data
+     * @return void
+     */
+    private function handleSubscriptionPaymentSuccess($transaction, $data)
+    {
+        // Get subscription
+        $subscriptionId = $transaction->meta['subscription_id'] ?? $transaction->order->subscription_id ?? null;
+        
+        if (!$subscriptionId) {
+            Logger::warning('Subscription ID Not Found in Transaction', [
+                'transaction_uuid' => $transaction->uuid
+            ]);
+            return;
+        }
+
+        $subscription = Subscription::find($subscriptionId);
+        
+        if (!$subscription) {
+            Logger::error('Subscription Not Found', [
+                'subscription_id' => $subscriptionId,
+                'transaction_uuid' => $transaction->uuid
+            ]);
+            return;
+        }
+
+        // Update subscription status to active
+        if ($subscription->status !== Status::SUBSCRIPTION_ACTIVE) {
+            $subscription->status = Status::SUBSCRIPTION_ACTIVE;
+            $subscription->save();
+
+            Logger::info('Subscription Activated via Polling', [
+                'subscription_id' => $subscription->id,
+                'transaction_uuid' => $transaction->uuid,
+                'previous_status' => $subscription->getOriginal('status')
+            ]);
+        }
+
+        // Increment bill count for renewals
+        $order = $transaction->order;
+        if ($order && $order->type === 'renewal') {
+            $subscription->bill_count = ($subscription->bill_count ?? 0) + 1;
+            
+            // Calculate next billing date
+            $interval = $subscription->billing_interval;
+            $nextBillingDate = date('Y-m-d H:i:s', strtotime("+1 {$interval}"));
+            
+            // Check if subscription should complete (limited billing cycles)
+            if ($subscription->bill_times > 0 && $subscription->bill_count >= $subscription->bill_times) {
+                $subscription->status = Status::SUBSCRIPTION_COMPLETED;
+                $subscription->next_billing_date = null;
+                
+                Logger::info('Subscription Completed via Polling (Max Billing Cycles Reached)', [
+                    'subscription_id' => $subscription->id,
+                    'bill_count' => $subscription->bill_count,
+                    'bill_times' => $subscription->bill_times
+                ]);
+            } else {
+                $subscription->next_billing_date = $nextBillingDate;
+                
+                Logger::info('Next Billing Date Updated via Polling', [
+                    'subscription_id' => $subscription->id,
+                    'next_billing_date' => $nextBillingDate,
+                    'bill_count' => $subscription->bill_count
+                ]);
+            }
+            
+            $subscription->save();
+        }
     }
 }

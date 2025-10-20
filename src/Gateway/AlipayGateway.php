@@ -10,6 +10,8 @@ use FluentCart\App\Services\Payments\PaymentInstance;
 use FluentCart\Framework\Support\Arr;
 use WPKJFluentCart\Alipay\Config\AlipayConfig;
 use WPKJFluentCart\Alipay\Processor\PaymentProcessor;
+use WPKJFluentCart\Alipay\Subscription\AlipaySubscriptions;
+use WPKJFluentCart\Alipay\Subscription\AlipaySubscriptionProcessor;
 use WPKJFluentCart\Alipay\Webhook\NotifyHandler;
 use WPKJFluentCart\Alipay\Utils\Helper;
 use WPKJFluentCart\Alipay\Utils\Logger;
@@ -33,15 +35,19 @@ class AlipayGateway extends AbstractPaymentGateway
      * 
      * @var array
      */
-    public array $supportedFeatures = ['payment', 'refund', 'webhook'];
+    public array $supportedFeatures = ['payment', 'refund', 'webhook', 'subscriptions'];
 
     /**
      * Constructor
      */
     public function __construct()
     {
+        $settings = new AlipaySettingsBase();
+        $subscriptions = new AlipaySubscriptions($settings);
+        
         parent::__construct(
-            new AlipaySettingsBase()
+            $settings,
+            $subscriptions
         );
     }
 
@@ -96,6 +102,19 @@ class AlipayGateway extends AbstractPaymentGateway
     public function makePaymentFromPaymentInstance(PaymentInstance $paymentInstance)
     {
         try {
+            // Check if this is a subscription payment
+            if ($paymentInstance->subscription) {
+                Logger::info('Processing Subscription Payment', [
+                    'order_id' => $paymentInstance->order->id,
+                    'order_type' => $paymentInstance->order->type,
+                    'subscription_id' => $paymentInstance->subscription->id
+                ]);
+                
+                $subscriptionProcessor = new AlipaySubscriptionProcessor($this->settings);
+                return $subscriptionProcessor->processSubscription($paymentInstance);
+            }
+            
+            // Regular single payment
             $processor = new PaymentProcessor($this->settings);
             return $processor->processSinglePayment($paymentInstance);
 
@@ -254,6 +273,53 @@ class AlipayGateway extends AbstractPaymentGateway
                 'label' => __('PC Face-to-Face Payment', 'wpkj-fluentcart-alipay-payment'),
                 'checkbox_label' => __('Enable Face-to-Face payment for PC/Desktop', 'wpkj-fluentcart-alipay-payment'),
                 'help' => __('When enabled, PC users will use QR code scan payment (alipay.trade.precreate) instead of web redirect payment. Users need to scan the QR code with Alipay app to complete payment.', 'wpkj-fluentcart-alipay-payment')
+            ],
+            'subscription_settings_header' => [
+                'type' => 'html_attr',
+                'label' => __('Subscription Settings', 'wpkj-fluentcart-alipay-payment'),
+                'value' => '<hr class="my-4"><h3 class="text-lg font-semibold mb-2">' . esc_html__('Subscription & Recurring Payment', 'wpkj-fluentcart-alipay-payment') . '</h3>'
+            ],
+            'enable_recurring_agreement' => [
+                'type' => 'checkbox',
+                'label' => __('Recurring Agreement (Auto Renewal)', 'wpkj-fluentcart-alipay-payment'),
+                'checkbox_label' => __('Enable automatic recurring payment via Alipay agreement', 'wpkj-fluentcart-alipay-payment'),
+                'help' => __('⚠️ This feature requires merchant to sign up for Alipay Recurring Payment service. If not enabled, subscriptions will use manual renewal mode where customers need to pay manually for each renewal.', 'wpkj-fluentcart-alipay-payment')
+            ],
+            'recurring_personal_product_code' => [
+                'type' => 'text',
+                'label' => __('Personal Product Code', 'wpkj-fluentcart-alipay-payment'),
+                'placeholder' => 'GENERAL_WITHHOLDING_P',
+                'help' => __('Product code provided by Alipay after signing recurring payment contract. Common values: GENERAL_WITHHOLDING_P (general withholding). Leave empty if not using recurring agreement.', 'wpkj-fluentcart-alipay-payment'),
+                'dependency' => [
+                    'depends_on' => 'enable_recurring_agreement',
+                    'value' => 'yes'
+                ]
+            ],
+            'recurring_info' => [
+                'type' => 'html_attr',
+                'label' => __('How It Works', 'wpkj-fluentcart-alipay-payment'),
+                'value' => sprintf(
+                    '<div class="mt-2 p-4 bg-blue-50 border border-blue-200 rounded">'
+                    . '<p class="text-sm mb-2"><strong>%s</strong></p>'
+                    . '<ul class="text-sm list-disc list-inside space-y-1">'
+                    . '<li>%s</li>'
+                    . '<li>%s</li>'
+                    . '<li>%s</li>'
+                    . '<li>%s</li>'
+                    . '</ul>'
+                    . '<p class="text-sm mt-3 text-gray-600">%s</p>'
+                    . '</div>',
+                    esc_html__('Alipay Recurring Agreement Process:', 'wpkj-fluentcart-alipay-payment'),
+                    esc_html__('Initial purchase: Customer signs recurring agreement + first payment', 'wpkj-fluentcart-alipay-payment'),
+                    esc_html__('Auto renewal: System automatically deducts payment on billing date', 'wpkj-fluentcart-alipay-payment'),
+                    esc_html__('Cancellation: Customer can cancel agreement anytime from their Alipay app', 'wpkj-fluentcart-alipay-payment'),
+                    esc_html__('Fallback: If agreement deduction fails, customer receives manual payment notification', 'wpkj-fluentcart-alipay-payment'),
+                    esc_html__('Note: Without this feature, all renewals require manual payment by customer.', 'wpkj-fluentcart-alipay-payment')
+                ),
+                'dependency' => [
+                    'depends_on' => 'enable_recurring_agreement',
+                    'value' => 'yes'
+                ]
             ]
         ];
     }
