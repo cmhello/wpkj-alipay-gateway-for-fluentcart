@@ -39,3 +39,7 @@ error_log
 .env
 .env.local
 .env.*.local
+
+# Development documentation (moved to docs/)
+# Keep docs/ in Git but exclude from production builds
+# Production deployment should exclude docs/ folder

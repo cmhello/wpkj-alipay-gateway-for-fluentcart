@@ -41,15 +41,15 @@ class EncodingService
      * This is the primary method for ensuring Chinese characters display correctly.
      * It handles various encoding issues that can cause garbled text:
      * 
-     * 1. Detects actual encoding (GBK, GB2312, etc.)
+     * 1. Detects actual encoding (GBK, GB2312, GB18030, BIG5, etc.)
      * 2. Converts to UTF-8 if needed
      * 3. Removes BOM (Byte Order Mark)
      * 4. Filters out non-printable control characters
      * 
-     * @param string $str Input string
-     * @param bool $strict Strict mode (throws exception on failure)
-     * @return string UTF-8 encoded string
-     * @throws \Exception If strict mode and conversion fails
+     * @param string $str Input string to be converted to UTF-8
+     * @param bool $strict Strict mode. If true, throws exception on conversion failure. Default is false.
+     * @return string UTF-8 encoded string, guaranteed to be valid UTF-8
+     * @throws \Exception If strict mode is enabled and encoding conversion fails
      */
     public static function ensureUtf8(string $str, bool $strict = false): string
     {
@@ -169,12 +169,13 @@ class EncodingService
     /**
      * Sanitize string for Alipay API
      * 
-     * Ensures string is UTF-8 and within Alipay's length limits
+     * Ensures string is UTF-8 and within Alipay's length limits.
+     * This method is specifically designed for Alipay API parameters.
      * 
-     * @param string $str Input string
-     * @param int $maxLength Maximum length (in characters), defaults to subject length
-     * @param bool $strict Strict mode
-     * @return string Sanitized string
+     * @param string $str Input string to sanitize
+     * @param int $maxLength Maximum length in characters (not bytes). Defaults to MAX_SUBJECT_LENGTH (256).
+     * @param bool $strict Strict mode. If true, throws exception on conversion failure. Default is false.
+     * @return string Sanitized and truncated string, guaranteed to be valid UTF-8
      */
     public static function sanitizeForAlipay(
         string $str, 
