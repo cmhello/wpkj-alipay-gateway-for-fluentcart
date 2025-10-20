@@ -293,8 +293,9 @@ class AlipayAPI
      */
     private function buildRequestParams($bizContent, $method, $returnUrl = '', $notifyUrl = '')
     {
-        // Use centralized EncodingService for consistent UTF-8 handling
-        $bizContent = EncodingService::ensureUtf8Array($bizContent);
+        // Do NOT use EncodingService::ensureUtf8Array() here!
+        // Avoid any encoding conversion that may corrupt UTF-8 multibyte characters
+        // Rely solely on json_encode with JSON_UNESCAPED_UNICODE flag
         
         $params = [
             'app_id' => $this->config['app_id'],

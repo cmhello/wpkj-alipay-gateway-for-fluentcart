@@ -166,9 +166,6 @@ class AlipaySubscriptionProcessor
         $subject = $this->buildSubscriptionSubject($order, $subscription);
         $body = $this->buildSubscriptionBody($order, $subscription);
 
-        // Note: EncodingService::sanitizeForAlipay() is already called in build methods
-        // No need to call again here
-
         // Build return and notify URLs
         $returnUrl = add_query_arg([
             'trx_hash' => $transaction->uuid,
@@ -247,9 +244,11 @@ class AlipaySubscriptionProcessor
             );
         }
         
-        // Use EncodingService to sanitize and truncate
-        // This ensures proper UTF-8 encoding and correct length handling
-        $subject = EncodingService::sanitizeForAlipay($subject, AlipayConfig::MAX_SUBJECT_LENGTH);
+        // Only truncate length, no encoding conversion
+        // Rely on json_encode with JSON_UNESCAPED_UNICODE to handle UTF-8
+        if (mb_strlen($subject, 'UTF-8') > AlipayConfig::MAX_SUBJECT_LENGTH) {
+            $subject = mb_substr($subject, 0, AlipayConfig::MAX_SUBJECT_LENGTH, 'UTF-8');
+        }
 
         return $subject;
     }
@@ -271,9 +270,11 @@ class AlipaySubscriptionProcessor
             $order->id
         );
 
-        // Use EncodingService to sanitize and truncate
-        // This ensures proper UTF-8 encoding and correct length handling
-        $body = EncodingService::sanitizeForAlipay($body, AlipayConfig::MAX_BODY_LENGTH);
+        // Only truncate length, no encoding conversion
+        // Rely on json_encode with JSON_UNESCAPED_UNICODE to handle UTF-8
+        if (mb_strlen($body, 'UTF-8') > AlipayConfig::MAX_BODY_LENGTH) {
+            $body = mb_substr($body, 0, AlipayConfig::MAX_BODY_LENGTH, 'UTF-8');
+        }
 
         return $body;
     }

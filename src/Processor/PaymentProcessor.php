@@ -276,15 +276,24 @@ class PaymentProcessor
             $item = $items[0];
             $itemTitle = !empty($item->title) ? $item->title : $item->post_title;
             
-            // Use centralized EncodingService for DRY principle
-            // Alipay subject max length from config
-            return EncodingService::sanitizeForAlipay($itemTitle, AlipayConfig::MAX_SUBJECT_LENGTH);
+            // Only truncate length, no encoding conversion
+            // Rely on json_encode with JSON_UNESCAPED_UNICODE to handle UTF-8
+            if (mb_strlen($itemTitle, 'UTF-8') > AlipayConfig::MAX_SUBJECT_LENGTH) {
+                $itemTitle = mb_substr($itemTitle, 0, AlipayConfig::MAX_SUBJECT_LENGTH, 'UTF-8');
+            }
+            
+            return $itemTitle;
         }
 
         $siteName = get_bloginfo('name');
         $subject = sprintf(__('Order from %s', 'wpkj-fluentcart-alipay-payment'), $siteName);
         
-        return EncodingService::sanitizeForAlipay($subject, AlipayConfig::MAX_SUBJECT_LENGTH);
+        // Only truncate length, no encoding conversion
+        if (mb_strlen($subject, 'UTF-8') > AlipayConfig::MAX_SUBJECT_LENGTH) {
+            $subject = mb_substr($subject, 0, AlipayConfig::MAX_SUBJECT_LENGTH, 'UTF-8');
+        }
+        
+        return $subject;
     }
 
     /**
@@ -298,17 +307,18 @@ class PaymentProcessor
         $items = [];
         foreach ($order->order_items as $item) {
             $itemTitle = !empty($item->title) ? $item->title : $item->post_title;
-            
-            // Use centralized EncodingService for consistent encoding
-            $itemTitle = EncodingService::ensureUtf8($itemTitle);
-            
             $items[] = $itemTitle . ' x' . $item->quantity;
         }
 
         $body = implode(', ', $items);
         
-        // Alipay body max length from config
-        return EncodingService::sanitizeForAlipay($body, AlipayConfig::MAX_BODY_LENGTH);
+        // Only truncate length, no encoding conversion
+        // Rely on json_encode with JSON_UNESCAPED_UNICODE to handle UTF-8
+        if (mb_strlen($body, 'UTF-8') > AlipayConfig::MAX_BODY_LENGTH) {
+            $body = mb_substr($body, 0, AlipayConfig::MAX_BODY_LENGTH, 'UTF-8');
+        }
+        
+        return $body;
     }
 
     /**
