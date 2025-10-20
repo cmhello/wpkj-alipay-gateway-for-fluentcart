@@ -276,10 +276,16 @@ class PaymentProcessor
             $item = $items[0];
             $itemTitle = !empty($item->title) ? $item->title : $item->post_title;
             
-            // Only truncate length, no encoding conversion
-            // Rely on json_encode with JSON_UNESCAPED_UNICODE to handle UTF-8
-            if (mb_strlen($itemTitle, 'UTF-8') > AlipayConfig::MAX_SUBJECT_LENGTH) {
-                $itemTitle = mb_substr($itemTitle, 0, AlipayConfig::MAX_SUBJECT_LENGTH, 'UTF-8');
+            // EDD plugin method: check byte length with strlen()
+            // Truncate safely using mb_substr() to avoid breaking UTF-8
+            if (strlen($itemTitle) > AlipayConfig::MAX_SUBJECT_LENGTH) {
+                // Calculate safe character count that won't exceed byte limit
+                $itemTitle = mb_substr($itemTitle, 0, floor(AlipayConfig::MAX_SUBJECT_LENGTH / 3));
+                // Re-check and trim further if needed
+                while (strlen($itemTitle) > AlipayConfig::MAX_SUBJECT_LENGTH - 3) {
+                    $itemTitle = mb_substr($itemTitle, 0, mb_strlen($itemTitle, 'UTF-8') - 1, 'UTF-8');
+                }
+                $itemTitle .= '...';
             }
             
             return $itemTitle;
@@ -288,9 +294,13 @@ class PaymentProcessor
         $siteName = get_bloginfo('name');
         $subject = sprintf(__('Order from %s', 'wpkj-fluentcart-alipay-payment'), $siteName);
         
-        // Only truncate length, no encoding conversion
-        if (mb_strlen($subject, 'UTF-8') > AlipayConfig::MAX_SUBJECT_LENGTH) {
-            $subject = mb_substr($subject, 0, AlipayConfig::MAX_SUBJECT_LENGTH, 'UTF-8');
+        // Same truncation logic
+        if (strlen($subject) > AlipayConfig::MAX_SUBJECT_LENGTH) {
+            $subject = mb_substr($subject, 0, floor(AlipayConfig::MAX_SUBJECT_LENGTH / 3));
+            while (strlen($subject) > AlipayConfig::MAX_SUBJECT_LENGTH - 3) {
+                $subject = mb_substr($subject, 0, mb_strlen($subject, 'UTF-8') - 1, 'UTF-8');
+            }
+            $subject .= '...';
         }
         
         return $subject;
@@ -312,10 +322,14 @@ class PaymentProcessor
 
         $body = implode(', ', $items);
         
-        // Only truncate length, no encoding conversion
-        // Rely on json_encode with JSON_UNESCAPED_UNICODE to handle UTF-8
-        if (mb_strlen($body, 'UTF-8') > AlipayConfig::MAX_BODY_LENGTH) {
-            $body = mb_substr($body, 0, AlipayConfig::MAX_BODY_LENGTH, 'UTF-8');
+        // EDD plugin method: check byte length with strlen()
+        // Truncate safely using mb_substr() to avoid breaking UTF-8
+        if (strlen($body) > AlipayConfig::MAX_BODY_LENGTH) {
+            $body = mb_substr($body, 0, floor(AlipayConfig::MAX_BODY_LENGTH / 3));
+            while (strlen($body) > AlipayConfig::MAX_BODY_LENGTH - 3) {
+                $body = mb_substr($body, 0, mb_strlen($body, 'UTF-8') - 1, 'UTF-8');
+            }
+            $body .= '...';
         }
         
         return $body;

@@ -244,10 +244,14 @@ class AlipaySubscriptionProcessor
             );
         }
         
-        // Only truncate length, no encoding conversion
-        // Rely on json_encode with JSON_UNESCAPED_UNICODE to handle UTF-8
-        if (mb_strlen($subject, 'UTF-8') > AlipayConfig::MAX_SUBJECT_LENGTH) {
-            $subject = mb_substr($subject, 0, AlipayConfig::MAX_SUBJECT_LENGTH, 'UTF-8');
+        // EDD plugin method: check byte length with strlen()
+        // Truncate safely using mb_substr() to avoid breaking UTF-8
+        if (strlen($subject) > AlipayConfig::MAX_SUBJECT_LENGTH) {
+            $subject = mb_substr($subject, 0, floor(AlipayConfig::MAX_SUBJECT_LENGTH / 3));
+            while (strlen($subject) > AlipayConfig::MAX_SUBJECT_LENGTH - 3) {
+                $subject = mb_substr($subject, 0, mb_strlen($subject, 'UTF-8') - 1, 'UTF-8');
+            }
+            $subject .= '...';
         }
 
         return $subject;
@@ -270,10 +274,14 @@ class AlipaySubscriptionProcessor
             $order->id
         );
 
-        // Only truncate length, no encoding conversion
-        // Rely on json_encode with JSON_UNESCAPED_UNICODE to handle UTF-8
-        if (mb_strlen($body, 'UTF-8') > AlipayConfig::MAX_BODY_LENGTH) {
-            $body = mb_substr($body, 0, AlipayConfig::MAX_BODY_LENGTH, 'UTF-8');
+        // EDD plugin method: check byte length with strlen()
+        // Truncate safely using mb_substr() to avoid breaking UTF-8
+        if (strlen($body) > AlipayConfig::MAX_BODY_LENGTH) {
+            $body = mb_substr($body, 0, floor(AlipayConfig::MAX_BODY_LENGTH / 3));
+            while (strlen($body) > AlipayConfig::MAX_BODY_LENGTH - 3) {
+                $body = mb_substr($body, 0, mb_strlen($body, 'UTF-8') - 1, 'UTF-8');
+            }
+            $body .= '...';
         }
 
         return $body;
