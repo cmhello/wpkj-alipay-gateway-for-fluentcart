@@ -264,15 +264,11 @@ class AlipayGateway extends AbstractPaymentGateway
             ],
             'auto_refund_on_cancel' => [
                 'type' => 'checkbox',
-                'label' => __('Auto-refund on Order Cancellation', 'wpkj-fluentcart-alipay-payment'),
-                'checkbox_label' => __('Enable automatic refund when order is cancelled', 'wpkj-fluentcart-alipay-payment'),
-                'help' => __('When enabled, the system will automatically process a refund through Alipay when an order is cancelled by admin or customer.', 'wpkj-fluentcart-alipay-payment')
+                'label' => __('Enable automatic refund when order is cancelled', 'wpkj-fluentcart-alipay-payment')
             ],
             'enable_face_to_face_pc' => [
                 'type' => 'checkbox',
-                'label' => __('PC Face-to-Face Payment', 'wpkj-fluentcart-alipay-payment'),
-                'checkbox_label' => __('Enable Face-to-Face payment for PC/Desktop', 'wpkj-fluentcart-alipay-payment'),
-                'help' => __('When enabled, PC users will use QR code scan payment (alipay.trade.precreate) instead of web redirect payment. Users need to scan the QR code with Alipay app to complete payment.', 'wpkj-fluentcart-alipay-payment')
+                'label' => __('Enable Face-to-Face QR code payment for PC/Desktop (Scan with Alipay app)', 'wpkj-fluentcart-alipay-payment')
             ],
             'subscription_settings_header' => [
                 'type' => 'html_attr',
@@ -281,9 +277,7 @@ class AlipayGateway extends AbstractPaymentGateway
             ],
             'enable_recurring_agreement' => [
                 'type' => 'checkbox',
-                'label' => __('Recurring Agreement (Auto Renewal)', 'wpkj-fluentcart-alipay-payment'),
-                'checkbox_label' => __('Enable automatic recurring payment via Alipay agreement', 'wpkj-fluentcart-alipay-payment'),
-                'help' => __('⚠️ This feature requires merchant to sign up for Alipay Recurring Payment service. If not enabled, subscriptions will use manual renewal mode where customers need to pay manually for each renewal.', 'wpkj-fluentcart-alipay-payment')
+                'label' => __('Enable automatic recurring payment (⚠️ Requires Alipay Recurring Payment service)', 'wpkj-fluentcart-alipay-payment')
             ],
             'recurring_personal_product_code' => [
                 'type' => 'text',
