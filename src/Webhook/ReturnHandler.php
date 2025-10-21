@@ -86,6 +86,15 @@ class ReturnHandler
             Logger::error('Transaction not found', ['trx_hash' => $trxHash]);
             return;
         }
+        
+        // ✅ Check if this transaction belongs to Alipay
+        if ($transaction->payment_method !== 'alipay') {
+            Logger::info('Skipping Alipay return handler - different payment method', [
+                'trx_hash' => $trxHash,
+                'payment_method' => $transaction->payment_method ?? 'unknown'
+            ]);
+            return;
+        }
 
         // If already succeeded, skip query
         if ($transaction->status === Status::TRANSACTION_SUCCEEDED) {

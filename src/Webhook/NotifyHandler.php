@@ -168,6 +168,15 @@ class NotifyHandler
             ]);
             return;
         }
+        
+        // ✅ Check if this transaction belongs to Alipay
+        if ($transaction->payment_method !== 'alipay') {
+            Logger::warning('Skipping Alipay notify handler - different payment method', [
+                'transaction_uuid' => $transaction->uuid,
+                'payment_method' => $transaction->payment_method ?? 'unknown'
+            ]);
+            return;
+        }
 
         // Check if this is a subscription payment
         if ($this->isSubscriptionTransaction($transaction)) {
@@ -210,6 +219,15 @@ class NotifyHandler
             Logger::error('Transaction Not Found', [
                 'out_trade_no' => $outTradeNo,
                 'transaction_uuid' => $transactionUuid
+            ]);
+            return;
+        }
+        
+        // ✅ Check if this transaction belongs to Alipay
+        if ($transaction->payment_method !== 'alipay') {
+            Logger::warning('Skipping Alipay notify handler - different payment method', [
+                'transaction_uuid' => $transaction->uuid,
+                'payment_method' => $transaction->payment_method ?? 'unknown'
             ]);
             return;
         }
