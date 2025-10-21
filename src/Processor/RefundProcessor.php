@@ -73,6 +73,16 @@ class RefundProcessor
             return;
         }
 
+        // Check if this order uses Alipay gateway
+        // Only process refunds for Alipay orders
+        if ($order->payment_method !== 'alipay') {
+            Logger::info('Skipping Alipay refund - different payment method', [
+                'order_id' => $order->id,
+                'payment_method' => $order->payment_method ?? 'unknown'
+            ]);
+            return;
+        }
+
         $this->processAutoRefund($order);
     }
 
@@ -91,6 +101,16 @@ class RefundProcessor
         $order = $data['order'] ?? null;
         
         if (!$order) {
+            return;
+        }
+
+        // Check if this order uses Alipay gateway
+        // Only process refunds for Alipay orders
+        if ($order->payment_method !== 'alipay') {
+            Logger::info('Skipping Alipay refund - different payment method', [
+                'order_id' => $order->id,
+                'payment_method' => $order->payment_method ?? 'unknown'
+            ]);
             return;
         }
 
