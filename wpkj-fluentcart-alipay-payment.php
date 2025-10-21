@@ -111,6 +111,9 @@ function wpkj_fc_alipay_bootstrap() {
         $f2fPageHandler = new \WPKJFluentCart\Alipay\Processor\FaceToFacePageHandler();
         $f2fPageHandler->register();
         
+        $statusRecovery = new \WPKJFluentCart\Alipay\Processor\OrderStatusRecovery();
+        $statusRecovery->register();
+        
     }, 9);
 }
 add_action('plugins_loaded', 'wpkj_fc_alipay_bootstrap', 20);
