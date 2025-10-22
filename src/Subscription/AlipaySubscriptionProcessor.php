@@ -172,9 +172,11 @@ class AlipaySubscriptionProcessor
             'fct_redirect' => 'yes'
         ], site_url('/'));
 
+        // CRITICAL: Do NOT include 'method' parameter in notify_url!
+        // Including method causes "suspected-attack" error in Face-to-Face payments
+        // because Alipay uses 'method' internally in its callbacks
         $notifyUrl = add_query_arg([
-            'fct_payment_listener' => '1',
-            'method' => 'alipay'
+            'fct_payment_listener' => '1'
         ], site_url('/'));
 
         return [
@@ -407,7 +409,8 @@ class AlipaySubscriptionProcessor
         
         // Remove return_url for F2F payment (not used)
         unset($params['return_url']);
-        $params['product_code'] = 'FACE_TO_FACE_PAYMENT';
+        // Remove product_code for F2F payment (not needed for precreate)
+        unset($params['product_code']);
 
         $result = $this->api->createFaceToFacePayment($params);
 

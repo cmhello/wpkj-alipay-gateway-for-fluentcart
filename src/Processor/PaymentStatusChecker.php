@@ -93,10 +93,18 @@ class PaymentStatusChecker
             if ($transaction->status === Status::TRANSACTION_SUCCEEDED) {
                 $order = Order::find($transaction->order_id);
                 
+                // Use Transaction's getReceiptPageUrl() method (FluentCart standard)
+                $receiptUrl = $transaction->getReceiptPageUrl(true);
+                
+                // Add order hash for additional tracking
+                $receiptUrl = add_query_arg([
+                    'order_hash' => $order->uuid
+                ], $receiptUrl);
+                
                 wp_send_json_success([
                     'status' => 'paid',
                     'message' => __('Payment completed successfully', 'wpkj-fluentcart-alipay-payment'),
-                    'redirect_url' => $order->getReceiptUrl()
+                    'redirect_url' => $receiptUrl
                 ]);
                 return;
             }
@@ -153,10 +161,18 @@ class PaymentStatusChecker
                         'trade_status' => $tradeStatus
                     ]);
                     
+                    // Use Transaction's getReceiptPageUrl() method (FluentCart standard)
+                    $receiptUrl = $transaction->getReceiptPageUrl(true);
+                    
+                    // Add order hash for additional tracking
+                    $receiptUrl = add_query_arg([
+                        'order_hash' => $order->uuid
+                    ], $receiptUrl);
+                    
                     wp_send_json_success([
                         'status' => 'paid',
                         'message' => __('Payment completed successfully', 'wpkj-fluentcart-alipay-payment'),
-                        'redirect_url' => $order->getReceiptUrl()
+                        'redirect_url' => $receiptUrl
                     ]);
                     return;
                 } elseif ($tradeStatus === 'TRADE_CLOSED') {

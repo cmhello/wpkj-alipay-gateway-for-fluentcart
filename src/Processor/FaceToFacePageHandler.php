@@ -101,7 +101,16 @@ class FaceToFacePageHandler
                 'order_id' => $order->id
             ]);
             
-            wp_redirect($order->getReceiptUrl());
+            // Use Transaction's getReceiptPageUrl() method (FluentCart standard)
+            // This uses StoreSettings and does NOT include download parameter
+            $receiptUrl = $transaction->getReceiptPageUrl(true);
+            
+            // Add order hash for additional tracking
+            $receiptUrl = add_query_arg([
+                'order_hash' => $order->uuid
+            ], $receiptUrl);
+            
+            wp_redirect($receiptUrl);
             exit;
         }
 

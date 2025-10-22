@@ -347,12 +347,16 @@ class PaymentProcessor
             return home_url('/?fluent-cart=receipt&trx_hash=' . $transaction->uuid);
         }
         
-        // Use FluentCart's built-in method to get receipt URL
-        // Add transaction hash for tracking
+        // Use Transaction's getReceiptPageUrl() method (FluentCart standard)
+        // This method uses StoreSettings and does NOT include download parameter
+        // The true parameter enables filters for third-party extensions
+        $receiptUrl = $transaction->getReceiptPageUrl(true);
+        
+        // Add order hash and redirect flag for additional tracking
         return add_query_arg([
-            'trx_hash' => $transaction->uuid,
+            'order_hash' => $order->uuid,
             'fct_redirect' => 'yes'
-        ], $order->getReceiptUrl());
+        ], $receiptUrl);
     }
 
     /**
