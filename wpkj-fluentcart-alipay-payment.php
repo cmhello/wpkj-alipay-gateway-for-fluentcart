@@ -111,6 +111,10 @@ function wpkj_fc_alipay_bootstrap() {
         $f2fPageHandler = new \WPKJFluentCart\Alipay\Processor\FaceToFacePageHandler();
         $f2fPageHandler->register();
         
+        // Register order cancel listener (for subscription cancellation sync)
+        $orderCancelListener = new \WPKJFluentCart\Alipay\Listeners\OrderCancelListener();
+        $orderCancelListener->register();
+        
     }, 9);
 }
 add_action('plugins_loaded', 'wpkj_fc_alipay_bootstrap', 20);

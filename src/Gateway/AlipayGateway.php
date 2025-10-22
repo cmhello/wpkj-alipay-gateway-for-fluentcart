@@ -314,6 +314,37 @@ class AlipayGateway extends AbstractPaymentGateway
                     'depends_on' => 'enable_recurring_agreement',
                     'value' => 'yes'
                 ]
+            ],
+            'auto_cancel_subscription_on_order_cancel' => [
+                'type' => 'checkbox',
+                'label' => __('Automatically cancel subscription when parent order is canceled (Initial order only)', 'wpkj-fluentcart-alipay-payment'),
+                'help' => __('When enabled, canceling the initial subscription order will automatically cancel the associated subscription. This does NOT affect renewal orders - canceling a renewal order will never cancel the subscription.', 'wpkj-fluentcart-alipay-payment')
+            ],
+            'subscription_cancel_info' => [
+                'type' => 'html_attr',
+                'label' => __('Order Cancellation Rules', 'wpkj-fluentcart-alipay-payment'),
+                'value' => sprintf(
+                    '<div class="mt-2 p-4 bg-amber-50 border border-amber-200 rounded">'
+                    . '<p class="text-sm mb-2"><strong>%s</strong></p>'
+                    . '<ul class="text-sm list-disc list-inside space-y-1">'
+                    . '<li>%s</li>'
+                    . '<li>%s</li>'
+                    . '<li>%s</li>'
+                    . '<li>%s</li>'
+                    . '</ul>'
+                    . '<p class="text-sm mt-3 text-blue-600"><strong>%s</strong> %s</p>'
+                    . '<p class="text-sm mt-2 text-gray-600"><strong>%s</strong> %s</p>'
+                    . '</div>',
+                    esc_html__('Automatic Subscription Cancellation Rules:', 'wpkj-fluentcart-alipay-payment'),
+                    esc_html__('✅ WILL cancel: Initial subscription order (type=subscription) is canceled', 'wpkj-fluentcart-alipay-payment'),
+                    esc_html__('❌ Will NOT cancel: Renewal order (type=renewal) is canceled', 'wpkj-fluentcart-alipay-payment'),
+                    esc_html__('❌ Will NOT cancel: Subscription already in canceled status', 'wpkj-fluentcart-alipay-payment'),
+                    esc_html__('❌ Will NOT cancel: Orders from other payment methods', 'wpkj-fluentcart-alipay-payment'),
+                    esc_html__('Note:', 'wpkj-fluentcart-alipay-payment'),
+                    esc_html__('This feature helps maintain data consistency between orders and subscriptions. All operations are logged in the order activity log.', 'wpkj-fluentcart-alipay-payment'),
+                    esc_html__('Default:', 'wpkj-fluentcart-alipay-payment'),
+                    esc_html__('This feature is DISABLED by default. Enable it only if you need automatic synchronization between order and subscription status.', 'wpkj-fluentcart-alipay-payment')
+                )
             ]
         ];
     }
