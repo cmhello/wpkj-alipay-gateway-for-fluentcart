@@ -66,7 +66,7 @@ function wpkj_fc_alipay_load_textdomain() {
         dirname(plugin_basename(__FILE__)) . '/languages/'
     );
 }
-add_action('plugins_loaded', 'wpkj_fc_alipay_load_textdomain');
+add_action('init', 'wpkj_fc_alipay_load_textdomain');
 
 /**
  * Initialize autoloader
