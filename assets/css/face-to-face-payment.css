@@ -134,3 +134,22 @@ body {
     margin-top: 20px;
     line-height: 1.6;
 }
+
+.security-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e8e8e8;
+}
+
+.security-shield {
+    flex-shrink: 0;
+    margin-right: 8px;
+}
+
+.security-text {
+    color: #999;
+    font-size: 12px;
+}

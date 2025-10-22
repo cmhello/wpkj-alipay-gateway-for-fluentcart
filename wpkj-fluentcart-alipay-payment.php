@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: WPKJ FluentCart Alipay Payment
- * Plugin URI: https://www.wpdaxue.com/fluentcart-alipay
+ * Plugin URI: https://www.wpdaxue.com/wpkj-fluentcart-alipay-payment
  * Description: Alipay payment gateway integration for FluentCart - Support PC Web, Mobile WAP, Face-to-Face, In-App payments, and Subscriptions
  * Version: 1.0.5
  * Requires at least: 6.5

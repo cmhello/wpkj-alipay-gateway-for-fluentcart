@@ -238,6 +238,14 @@ class FaceToFacePageHandler
             <div class="instruction">
                 <?php echo esc_html__('The page will automatically refresh after payment is completed', 'wpkj-fluentcart-alipay-payment'); ?>
             </div>
+
+            <div class="security-footer">
+                <svg class="security-shield" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="#1678FF">
+                    <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm6 9.09c0 4-2.55 7.7-6 8.83-3.45-1.13-6-4.82-6-8.83V6.31l6-2.12 6 2.12v4.78z"/>
+                    <path d="M9.5 11.5l1.41 1.41L15.5 8.34 14.09 6.93l-3.18 3.18-1.41-1.42z"/>
+                </svg>
+                <span class="security-text"><?php echo esc_html__('Secure payment service provided by Alipay', 'wpkj-fluentcart-alipay-payment'); ?></span>
+            </div>
         </div>
     </div>
 
