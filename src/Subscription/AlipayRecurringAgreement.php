@@ -4,6 +4,7 @@ namespace WPKJFluentCart\Alipay\Subscription;
 
 use FluentCart\App\Helpers\Status;
 use FluentCart\App\Models\Subscription;
+use FluentCart\App\Modules\Subscriptions\Services\SubscriptionService;
 use FluentCart\Framework\Support\Arr;
 use WPKJFluentCart\Alipay\API\AlipayAPI;
 use WPKJFluentCart\Alipay\Config\AlipayConfig;
@@ -223,6 +224,8 @@ class AlipayRecurringAgreement
     /**
      * 执行协议代扣（续费支付）
      * 
+     * Uses FluentCart's SubscriptionService::recordRenewalPayment() for standard renewal handling
+     * 
      * @param Subscription $subscription 订阅模型
      * @param int $amount 扣款金额（分）
      * @param array $orderData 订单数据
@@ -291,19 +294,66 @@ class AlipayRecurringAgreement
             $response = Arr::get($result, 'alipay_trade_pay_response', []);
             $code = Arr::get($response, 'code');
             $tradeNo = Arr::get($response, 'trade_no');
+            $buyerLogonId = Arr::get($response, 'buyer_logon_id', '');
+            $buyerUserId = Arr::get($response, 'buyer_user_id', '');
 
             if ($code === '10000') {
-                // 扣款成功
-                Logger::info('Agreement Pay Success', [
+                // 扣款成功 - 使用FluentCart标准方法记录续费支付
+                Logger::info('Agreement Pay Success - Recording Renewal Payment', [
                     'subscription_id' => $subscription->id,
                     'trade_no' => $tradeNo,
                     'out_trade_no' => $outTradeNo
+                ]);
+
+                // 准备交易数据
+                $transactionData = [
+                    'subscription_id' => $subscription->id,
+                    'vendor_charge_id' => $tradeNo,
+                    'total' => $amount,
+                    'status' => Status::TRANSACTION_SUCCEEDED,
+                    'payment_method' => 'alipay',
+                    'meta' => [
+                        'alipay_trade_no' => $tradeNo,
+                        'out_trade_no' => $outTradeNo,
+                        'buyer_logon_id' => $buyerLogonId,
+                        'buyer_user_id' => $buyerUserId,
+                        'payment_type' => 'agreement_pay',
+                        'agreement_no' => $agreementNo
+                    ]
+                ];
+
+                // 准备订阅更新参数
+                $subscriptionUpdateArgs = [
+                    'next_billing_date' => $this->calculateNextBillingDate($subscription),
+                    'status' => Status::SUBSCRIPTION_ACTIVE
+                ];
+
+                // 使用FluentCart标准方法 - 自动创建续费订单、订单项、交易记录并触发事件
+                $createdTransaction = SubscriptionService::recordRenewalPayment(
+                    $transactionData,
+                    $subscription,
+                    $subscriptionUpdateArgs
+                );
+
+                if (is_wp_error($createdTransaction)) {
+                    Logger::error('Failed to record renewal payment via FluentCart', [
+                        'subscription_id' => $subscription->id,
+                        'error' => $createdTransaction->get_error_message()
+                    ]);
+                    return $createdTransaction;
+                }
+
+                Logger::info('Renewal Payment Recorded Successfully via FluentCart Standard Method', [
+                    'subscription_id' => $subscription->id,
+                    'transaction_id' => $createdTransaction->id,
+                    'trade_no' => $tradeNo
                 ]);
 
                 return [
                     'status' => 'success',
                     'trade_no' => $tradeNo,
                     'out_trade_no' => $outTradeNo,
+                    'transaction_id' => $createdTransaction->id,
                     'message' => __('Renewal payment successful.', 'wpkj-fluentcart-alipay-payment')
                 ];
             } else {
@@ -327,6 +377,24 @@ class AlipayRecurringAgreement
 
             return new \WP_Error('agreement_pay_exception', $e->getMessage());
         }
+    }
+
+    /**
+     * Calculate next billing date for subscription
+     * 
+     * Uses FluentCart's built-in guessNextBillingDate() method for consistency
+     * 
+     * @param Subscription $subscription
+     * @return string Y-m-d H:i:s format
+     */
+    private function calculateNextBillingDate(Subscription $subscription)
+    {
+        // Use FluentCart's built-in method which handles:
+        // - Trial period calculation
+        // - Interval-based date calculation
+        // - Last order date tracking
+        // - Edge cases and timezone handling
+        return $subscription->guessNextBillingDate(true);
     }
 
     /**

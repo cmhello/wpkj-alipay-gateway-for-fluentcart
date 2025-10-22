@@ -6,7 +6,7 @@ use FluentCart\App\Helpers\Status;
 use FluentCart\App\Models\OrderTransaction;
 use FluentCart\App\Models\Subscription;
 use FluentCart\App\Modules\PaymentMethods\Core\AbstractSubscriptionModule;
-use FluentCart\App\Modules\Subscriptions\Services\SubscriptionService;
+use FluentCart\App\Modules\Subscriptions\Services\SubscriptionService as FluentCartSubscriptionService;
 use FluentCart\App\Services\DateTime\DateTime;
 use FluentCart\Framework\Support\Arr;
 use WPKJFluentCart\Alipay\API\AlipayAPI;
@@ -37,6 +37,8 @@ class AlipaySubscriptions extends AbstractSubscriptionModule
 
     /**
      * Re-sync subscription status from Alipay
+     * 
+     * Uses FluentCart's SubscriptionService::syncSubscriptionStates() for standard state management
      * 
      * Since Alipay doesn't have native subscription API,
      * we check the latest payment transaction status
@@ -94,17 +96,32 @@ class AlipaySubscriptions extends AbstractSubscriptionModule
                 'trade_no' => $tradeNo
             ]);
 
-            // Update subscription based on payment status
+            // Map Alipay status to FluentCart subscription status
             $subscriptionStatus = $this->mapAlipayStatusToSubscription($tradeStatus);
             
-            if ($subscriptionStatus && $subscriptionModel->status !== $subscriptionStatus) {
-                $subscriptionModel->status = $subscriptionStatus;
-                $subscriptionModel->save();
+            if ($subscriptionStatus) {
+                // Use FluentCart's syncSubscriptionStates for standard state management
+                // This automatically handles bill_count, EOT detection, and triggers proper events
+                $updateArgs = [
+                    'status' => $subscriptionStatus
+                ];
 
-                Logger::info('Subscription Status Updated', [
+                Logger::info('Syncing Subscription State via FluentCart Standard Method', [
                     'subscription_id' => $subscriptionModel->id,
                     'new_status' => $subscriptionStatus,
                     'alipay_status' => $tradeStatus
+                ]);
+
+                // Use FluentCart standard method - handles all state logic automatically
+                $subscriptionModel = FluentCartSubscriptionService::syncSubscriptionStates(
+                    $subscriptionModel,
+                    $updateArgs
+                );
+
+                Logger::info('Subscription State Synced Successfully', [
+                    'subscription_id' => $subscriptionModel->id,
+                    'status' => $subscriptionModel->status,
+                    'bill_count' => $subscriptionModel->bill_count
                 ]);
             }
 
@@ -291,6 +308,8 @@ class AlipaySubscriptions extends AbstractSubscriptionModule
     /**
      * Reactivate subscription
      * 
+     * Uses FluentCart's SubscriptionService::recordManualRenewal() for standard reactivation
+     * 
      * @param array $data
      * @param int $subscriptionId
      * @return void
@@ -308,41 +327,121 @@ class AlipaySubscriptions extends AbstractSubscriptionModule
             throw new \Exception(__('This subscription is not using Alipay.', 'wpkj-fluentcart-alipay-payment'));
         }
 
-        Logger::info('Alipay Subscription Reactivation', [
-            'subscription_id' => $subscriptionId
+        Logger::info('Alipay Subscription Reactivation via FluentCart Standard Method', [
+            'subscription_id' => $subscriptionId,
+            'current_status' => $subscription->status
         ]);
 
-        // Update subscription status
-        $subscription->status = Status::SUBSCRIPTION_ACTIVE;
-        $subscription->canceled_at = null;
-        $subscription->save();
+        // Find or create a valid transaction for this subscription
+        // For reactivation, we need to have a completed payment transaction
+        $transaction = OrderTransaction::query()
+            ->where('subscription_id', $subscription->id)
+            ->where('status', Status::TRANSACTION_SUCCEEDED)
+            ->orderBy('id', 'DESC')
+            ->first();
 
-        // Schedule next billing
-        $this->scheduleNextRenewal($subscription);
-    }
+        if (!$transaction) {
+            // If no transaction exists, we need to update subscription directly
+            Logger::warning('No Valid Transaction Found for Reactivation, Using Direct Update', [
+                'subscription_id' => $subscriptionId
+            ]);
 
-    /**
-     * Schedule next renewal for subscription
-     * 
-     * @param Subscription $subscription
-     * @return void
-     */
-    private function scheduleNextRenewal(Subscription $subscription)
-    {
-        // This will be handled by FluentCart's built-in cron system
-        // We just need to ensure the next billing date is set correctly
-        
-        if (!$subscription->next_billing_date) {
-            $interval = $subscription->billing_interval;
-            $nextBillingDate = date('Y-m-d H:i:s', strtotime("+1 {$interval}"));
-            
-            $subscription->next_billing_date = $nextBillingDate;
-            $subscription->save();
+            // Use FluentCart's syncSubscriptionStates for status update
+            $updateArgs = [
+                'status' => Status::SUBSCRIPTION_ACTIVE,
+                'canceled_at' => null,
+                'next_billing_date' => $subscription->guessNextBillingDate(true)
+            ];
 
-            Logger::info('Next Billing Date Scheduled', [
+            $subscription = FluentCartSubscriptionService::syncSubscriptionStates(
+                $subscription,
+                $updateArgs
+            );
+
+            Logger::info('Subscription Reactivated via SyncStates', [
+                'subscription_id' => $subscriptionId,
+                'new_status' => $subscription->status,
+                'next_billing_date' => $subscription->next_billing_date
+            ]);
+
+            return;
+        }
+
+        // Prepare billing info from transaction metadata
+        $billingInfo = [
+            'method' => 'alipay',
+            'type' => Arr::get($transaction->meta, 'payment_type', 'standard'),
+            'details' => [
+                'buyer_logon_id' => Arr::get($transaction->meta, 'buyer_logon_id', ''),
+                'trade_no' => Arr::get($transaction->meta, 'alipay_trade_no', '')
+            ]
+        ];
+
+        // If subscription has agreement, include it
+        if ($subscription->vendor_subscription_id) {
+            $billingInfo['agreement_no'] = $subscription->vendor_subscription_id;
+        }
+
+        // Prepare subscription update arguments
+        $subscriptionArgs = [
+            'status' => Status::SUBSCRIPTION_ACTIVE,
+            'canceled_at' => null,
+            'current_payment_method' => 'alipay',
+            'next_billing_date' => $subscription->guessNextBillingDate(true)
+        ];
+
+        Logger::info('Using FluentCart recordManualRenewal for Reactivation', [
+            'subscription_id' => $subscriptionId,
+            'transaction_id' => $transaction->id,
+            'next_billing_date' => $subscriptionArgs['next_billing_date']
+        ]);
+
+        // Use FluentCart's standard method for manual renewal reactivation
+        // This automatically:
+        // - Updates renewal order status to completed
+        // - Updates subscription payment method info
+        // - Syncs subscription status
+        // - Syncs order statuses
+        // - Triggers SubscriptionRenewed event
+        try {
+            $subscription = FluentCartSubscriptionService::recordManualRenewal(
+                $subscription,
+                $transaction,
+                [
+                    'billing_info' => $billingInfo,
+                    'subscription_args' => $subscriptionArgs
+                ]
+            );
+
+            Logger::info('Subscription Reactivated Successfully via FluentCart Standard Method', [
                 'subscription_id' => $subscription->id,
-                'next_billing_date' => $nextBillingDate
+                'status' => $subscription->status,
+                'next_billing_date' => $subscription->next_billing_date
+            ]);
+
+        } catch (\Exception $e) {
+            Logger::error('Reactivation via recordManualRenewal Failed', [
+                'subscription_id' => $subscriptionId,
+                'error' => $e->getMessage()
+            ]);
+
+            // Fallback to direct status update
+            $updateArgs = [
+                'status' => Status::SUBSCRIPTION_ACTIVE,
+                'canceled_at' => null,
+                'next_billing_date' => $subscription->guessNextBillingDate(true)
+            ];
+
+            $subscription = FluentCartSubscriptionService::syncSubscriptionStates(
+                $subscription,
+                $updateArgs
+            );
+
+            Logger::info('Subscription Reactivated via Fallback Method', [
+                'subscription_id' => $subscriptionId
             ]);
         }
     }
+
+
 }
