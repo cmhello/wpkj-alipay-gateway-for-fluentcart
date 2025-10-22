@@ -226,6 +226,7 @@ class PaymentProcessor
         if ($totalAmount > AlipayConfig::MAX_SINGLE_TRANSACTION_AMOUNT) {
             throw new \Exception(
                 sprintf(
+                    /* translators: %s: maximum transaction amount in CNY */
                     __('Payment amount exceeds Alipay single transaction limit (%s CNY).', 'wpkj-fluentcart-alipay-payment'),
                     number_format(AlipayConfig::MAX_SINGLE_TRANSACTION_AMOUNT)
                 )
@@ -286,7 +287,11 @@ class PaymentProcessor
         }
 
         $siteName = get_bloginfo('name');
-        $subject = sprintf(__('Order from %s', 'wpkj-fluentcart-alipay-payment'), $siteName);
+        $subject = sprintf(
+            /* translators: %s: website name */
+            __('Order from %s', 'wpkj-fluentcart-alipay-payment'),
+            $siteName
+        );
         
         // Same truncation logic
         if (strlen($subject) > AlipayConfig::MAX_SUBJECT_LENGTH) {
@@ -450,6 +455,7 @@ class PaymentProcessor
         fluent_cart_add_log(
             __('Alipay Payment Confirmation', 'wpkj-fluentcart-alipay-payment'),
             sprintf(
+                /* translators: %s: Alipay transaction ID */
                 __('Payment confirmed from Alipay. Trade No: %s', 'wpkj-fluentcart-alipay-payment'),
                 $alipayData['trade_no']
             ),
@@ -492,6 +498,7 @@ class PaymentProcessor
         fluent_cart_add_log(
             __('Alipay Payment Failed', 'wpkj-fluentcart-alipay-payment'),
             sprintf(
+                /* translators: %s: failure reason */
                 __('Payment failed. Reason: %s', 'wpkj-fluentcart-alipay-payment'),
                 $data['reason'] ?? 'Unknown'
             ),

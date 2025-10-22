@@ -567,6 +567,7 @@ class AlipayRecurringAgreement
         if (!empty($items[0])) {
             $productTitle = $items[0]['title'] ?? __('Subscription', 'wpkj-fluentcart-alipay-payment');
             return sprintf(
+                /* translators: %s: product title */
                 __('%s - Auto Renewal', 'wpkj-fluentcart-alipay-payment'),
                 $productTitle
             );

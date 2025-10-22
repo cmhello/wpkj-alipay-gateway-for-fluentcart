@@ -273,6 +273,7 @@ class PaymentStatusChecker
         fluent_cart_add_log(
             __('Alipay Face-to-Face Payment Confirmed', 'wpkj-fluentcart-alipay-payment'),
             sprintf(
+                /* translators: %s: Alipay transaction ID */
                 __('Payment confirmed via status polling. Trade No: %s', 'wpkj-fluentcart-alipay-payment'),
                 $tradeData['trade_no'] ?? 'N/A'
             ),

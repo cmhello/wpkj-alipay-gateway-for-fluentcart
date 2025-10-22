@@ -236,11 +236,13 @@ class AlipaySubscriptionProcessor
         // Build subject with subscription type
         if ($order->type === 'renewal') {
             $subject = sprintf(
+                /* translators: %s: product title */
                 __('%s - Renewal', 'wpkj-fluentcart-alipay-payment'),
                 $productTitle
             );
         } else {
             $subject = sprintf(
+                /* translators: %s: product title */
                 __('%s - Subscription', 'wpkj-fluentcart-alipay-payment'),
                 $productTitle
             );
@@ -271,7 +273,8 @@ class AlipaySubscriptionProcessor
         $intervalText = $this->getIntervalText($subscription->billing_interval);
         
         $body = sprintf(
-            __('Subscription payment - %s - Order #%s', 'wpkj-fluentcart-alipay-payment'),
+            /* translators: 1: billing interval text (e.g., Monthly), 2: order ID */
+            __('Subscription payment - %1$s - Order #%2$s', 'wpkj-fluentcart-alipay-payment'),
             $intervalText,
             $order->id
         );

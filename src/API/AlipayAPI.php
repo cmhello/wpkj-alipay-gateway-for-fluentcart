@@ -182,7 +182,11 @@ class AlipayAPI
                 ]);
                 return new \WP_Error(
                     'alipay_http_error',
-                    sprintf(__('HTTP %d error from Alipay', 'wpkj-fluentcart-alipay-payment'), $httpCode)
+                    sprintf(
+                        /* translators: %d: HTTP status code */
+                        __('HTTP %d error from Alipay', 'wpkj-fluentcart-alipay-payment'),
+                        $httpCode
+                    )
                 );
             }
 
@@ -500,7 +504,11 @@ class AlipayAPI
                 ]);
                 return new \WP_Error(
                     'alipay_http_error',
-                    sprintf(__('HTTP %d error from Alipay', 'wpkj-fluentcart-alipay-payment'), $httpCode)
+                    sprintf(
+                        /* translators: %d: HTTP status code */
+                        __('HTTP %d error from Alipay', 'wpkj-fluentcart-alipay-payment'),
+                        $httpCode
+                    )
                 );
             }
 
@@ -592,7 +600,11 @@ class AlipayAPI
                 ]);
                 return new \WP_Error(
                     'alipay_http_error',
-                    sprintf(__('HTTP %d error from Alipay', 'wpkj-fluentcart-alipay-payment'), $httpCode)
+                    sprintf(
+                        /* translators: %d: HTTP status code */
+                        __('HTTP %d error from Alipay', 'wpkj-fluentcart-alipay-payment'),
+                        $httpCode
+                    )
                 );
             }
 
@@ -681,7 +693,11 @@ class AlipayAPI
                 ]);
                 return new \WP_Error(
                     'alipay_http_error',
-                    sprintf(__('HTTP %d error from Alipay', 'wpkj-fluentcart-alipay-payment'), $httpCode)
+                    sprintf(
+                        /* translators: %d: HTTP status code */
+                        __('HTTP %d error from Alipay', 'wpkj-fluentcart-alipay-payment'),
+                        $httpCode
+                    )
                 );
             }
 
