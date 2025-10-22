@@ -115,6 +115,7 @@ class ClientDetector
             return '';
         }
         
-        return $_SERVER['HTTP_USER_AGENT'];
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- User agent string used for payment detection, not output
+        return sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT']));
     }
 }

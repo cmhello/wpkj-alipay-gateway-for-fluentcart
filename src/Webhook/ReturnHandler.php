@@ -63,8 +63,10 @@ class ReturnHandler
     public function handleReturn()
     {
         // Get parameters - note we don't check 'method' anymore because Alipay overwrites it
-        $trxHash = isset($_GET['trx_hash']) ? sanitize_text_field($_GET['trx_hash']) : '';
-        $redirect = isset($_GET['fct_redirect']) ? sanitize_text_field($_GET['fct_redirect']) : '';
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput -- Alipay return URL verified by signature
+        $trxHash = isset($_GET['trx_hash']) ? sanitize_text_field(wp_unslash($_GET['trx_hash'])) : '';
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput -- Alipay return URL verified by signature
+        $redirect = isset($_GET['fct_redirect']) ? sanitize_text_field(wp_unslash($_GET['fct_redirect'])) : '';
 
         if ($redirect !== 'yes' || empty($trxHash)) {
             Logger::warning('Invalid return parameters', [

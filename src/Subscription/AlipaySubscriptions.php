@@ -211,7 +211,7 @@ class AlipaySubscriptions extends AbstractSubscriptionModule
         ]);
 
         if (is_wp_error($result)) {
-            throw new \Exception($result->get_error_message());
+            throw new \Exception(esc_html($result->get_error_message()));
         }
     }
 
@@ -320,11 +320,11 @@ class AlipaySubscriptions extends AbstractSubscriptionModule
         $subscription = Subscription::find($subscriptionId);
         
         if (!$subscription) {
-            throw new \Exception(__('Subscription not found.', 'wpkj-fluentcart-alipay-payment'));
+            throw new \Exception(esc_html__('Subscription not found.', 'wpkj-fluentcart-alipay-payment'));
         }
 
         if ($subscription->current_payment_method !== 'alipay') {
-            throw new \Exception(__('This subscription is not using Alipay.', 'wpkj-fluentcart-alipay-payment'));
+            throw new \Exception(esc_html__('This subscription is not using Alipay.', 'wpkj-fluentcart-alipay-payment'));
         }
 
         Logger::info('Alipay Subscription Reactivation via FluentCart Standard Method', [

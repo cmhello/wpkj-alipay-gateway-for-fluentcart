@@ -62,14 +62,16 @@ class PaymentStatusChecker
     {
         try {
             // Verify nonce for CSRF protection
-            if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'wpkj_alipay_check_status')) {
+            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Nonce verification handles security
+            if (!isset($_POST['nonce']) || !wp_verify_nonce(wp_unslash($_POST['nonce']), 'wpkj_alipay_check_status')) {
                 wp_send_json_error([
                     'message' => __('Security verification failed', 'wpkj-fluentcart-alipay-payment')
                 ], 403);
                 return;
             }
             
-            $transactionUuid = sanitize_text_field($_POST['transaction_uuid'] ?? '');
+            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- sanitize_text_field handles this
+            $transactionUuid = isset($_POST['transaction_uuid']) ? sanitize_text_field(wp_unslash($_POST['transaction_uuid'])) : '';
 
             if (empty($transactionUuid)) {
                 wp_send_json_error([
@@ -372,9 +374,9 @@ class PaymentStatusChecker
         if ($order && $order->type === 'renewal') {
             $subscription->bill_count = ($subscription->bill_count ?? 0) + 1;
             
-            // Calculate next billing date
+            // Calculate next billing date using WordPress timezone-safe function
             $interval = $subscription->billing_interval;
-            $nextBillingDate = date('Y-m-d H:i:s', strtotime("+1 {$interval}"));
+            $nextBillingDate = gmdate('Y-m-d H:i:s', strtotime("+1 {$interval}", current_time('timestamp')));
             
             // Check if subscription should complete (limited billing cycles)
             if ($subscription->bill_times > 0 && $subscription->bill_count >= $subscription->bill_times) {

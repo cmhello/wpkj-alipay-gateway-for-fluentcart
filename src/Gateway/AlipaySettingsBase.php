@@ -211,7 +211,7 @@ class AlipaySettingsBase extends BaseGatewaySettings
             
             $encryptedKey = $this->get()['test_private_key'] ?? '';
             if (empty($encryptedKey)) {
-                throw new \Exception(__('Test private key is not configured', 'wpkj-fluentcart-alipay-payment'));
+                throw new \Exception(esc_html__('Test private key is not configured', 'wpkj-fluentcart-alipay-payment'));
             }
             
             $decrypted = FluentCartHelper::decryptKey($encryptedKey);
@@ -220,7 +220,7 @@ class AlipaySettingsBase extends BaseGatewaySettings
                     'mode' => 'test',
                     'encrypted_key_length' => strlen($encryptedKey)
                 ]);
-                throw new \Exception(__('Unable to decrypt test private key. Please re-enter your credentials.', 'wpkj-fluentcart-alipay-payment'));
+                throw new \Exception(esc_html__('Unable to decrypt test private key. Please re-enter your credentials.', 'wpkj-fluentcart-alipay-payment'));
             }
             
             return $decrypted;
@@ -232,7 +232,7 @@ class AlipaySettingsBase extends BaseGatewaySettings
         
         $encryptedKey = $this->get()['live_private_key'] ?? '';
         if (empty($encryptedKey)) {
-            throw new \Exception(__('Live private key is not configured', 'wpkj-fluentcart-alipay-payment'));
+            throw new \Exception(esc_html__('Live private key is not configured', 'wpkj-fluentcart-alipay-payment'));
         }
         
         $decrypted = FluentCartHelper::decryptKey($encryptedKey);
@@ -241,7 +241,7 @@ class AlipaySettingsBase extends BaseGatewaySettings
                 'mode' => 'live',
                 'encrypted_key_length' => strlen($encryptedKey)
             ]);
-            throw new \Exception(__('Unable to decrypt live private key. Please re-enter your credentials.', 'wpkj-fluentcart-alipay-payment'));
+            throw new \Exception(esc_html__('Unable to decrypt live private key. Please re-enter your credentials.', 'wpkj-fluentcart-alipay-payment'));
         }
         
         return $decrypted;

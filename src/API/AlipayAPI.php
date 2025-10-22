@@ -305,7 +305,7 @@ class AlipayAPI
             'method' => $method,
             'charset' => $this->config['charset'],
             'sign_type' => $this->config['sign_type'],
-            'timestamp' => date('Y-m-d H:i:s'),
+            'timestamp' => gmdate('Y-m-d H:i:s', current_time('timestamp')),
             'version' => '1.0',
             // JSON_UNESCAPED_UNICODE ensures Chinese characters are not escaped
             // JSON_UNESCAPED_SLASHES prevents escaping of forward slashes
@@ -381,7 +381,13 @@ class AlipayAPI
                 'openssl_error' => $opensslError,
                 'sign_type' => $signType
             ]);
-            throw new \Exception('Failed to generate signature: ' . $opensslError);
+            throw new \Exception(
+                sprintf(
+                    /* translators: %s: OpenSSL error message */
+                    esc_html__('Failed to generate signature: %s', 'wpkj-fluentcart-alipay-payment'),
+                    esc_html($opensslError)
+                )
+            );
         }
 
         return base64_encode($signature);

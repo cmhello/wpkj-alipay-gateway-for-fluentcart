@@ -83,9 +83,13 @@ class AlipayGateway extends AbstractPaymentGateway
      */
     public function boot()
     {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Alipay return URL verification handled by signature
         if (!empty($_GET['trx_hash']) && 
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Alipay return URL verification handled by signature
             !empty($_GET['fct_redirect']) && 
-            $_GET['fct_redirect'] === 'yes' &&
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Alipay return URL verification handled by signature
+            sanitize_text_field(wp_unslash($_GET['fct_redirect'])) === 'yes' &&
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Alipay return URL verification handled by signature
             (!empty($_GET['sign']) || !empty($_GET['out_trade_no']))) {
             
             $returnHandler = new \WPKJFluentCart\Alipay\Webhook\ReturnHandler();
@@ -472,7 +476,7 @@ class AlipayGateway extends AbstractPaymentGateway
                         'original_key_length' => strlen($data["{$mode}_private_key"])
                     ]);
                     throw new \Exception(
-                        __('Failed to encrypt private key. Please try again.', 'wpkj-fluentcart-alipay-payment')
+                        esc_html__('Failed to encrypt private key. Please try again.', 'wpkj-fluentcart-alipay-payment')
                     );
                 }
                 

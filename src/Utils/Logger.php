@@ -105,7 +105,7 @@ class Logger
         }
         
         if (is_array($content) || is_object($content)) {
-            $content = print_r($content, true);
+            $content = print_r($content, true); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r -- Logging utility requires data formatting
         }
 
         // Use FluentCart's logging function
@@ -120,7 +120,7 @@ class Logger
 
         // Fallback to error_log if FluentCart logging is unavailable
         if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log(sprintf('[Alipay %s] %s: %s', strtoupper($level), $title, $content));
+            error_log(sprintf('[Alipay %s] %s: %s', strtoupper($level), $title, $content)); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Debug logging fallback
         }
     }
 }

@@ -67,7 +67,7 @@ class NotifyHandler
     public function processNotify()
     {
         // Get POST data
-        $data = $_POST;
+        $data = $_POST; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Alipay webhook verification handled by signature verification
 
         if (empty($data)) {
             Logger::error('Notify Processing', 'Empty notification data');
@@ -80,8 +80,9 @@ class NotifyHandler
 
         Logger::info('Notify Received', $data);
 
-        // 检查是否为协议签约回调
-        $action = $_GET['action'] ?? '';
+        // Check if this is an agreement sign callback
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput -- Action validated below
+        $action = isset($_GET['action']) ? sanitize_text_field(wp_unslash($_GET['action'])) : '';
         if ($action === 'agreement') {
             $this->processAgreementNotify($data);
             return;
@@ -312,7 +313,8 @@ class NotifyHandler
     private function sendResponse($result)
     {
         // Alipay expects simple text response
-        echo $result;
+        // Only 'success' or 'fail' are valid responses - no escaping needed for these fixed strings
+        echo esc_html($result);
         exit;
     }
 
@@ -385,9 +387,9 @@ class NotifyHandler
         if ($transaction->order->type === 'renewal') {
             $subscription->bill_count = ($subscription->bill_count ?? 0) + 1;
             
-            // Calculate next billing date
+            // Calculate next billing date using WordPress timezone-safe function
             $interval = $subscription->billing_interval;
-            $nextBillingDate = date('Y-m-d H:i:s', strtotime("+1 {$interval}"));
+            $nextBillingDate = gmdate('Y-m-d H:i:s', strtotime("+1 {$interval}", current_time('timestamp')));
             
             // Check if subscription should complete (limited billing cycles)
             if ($subscription->bill_times > 0 && $subscription->bill_count >= $subscription->bill_times) {

@@ -3,7 +3,7 @@ Contributors: cmhello
 Donate link: https://www.wpdaxue.com/wpkj-fluentcart-alipay-payment
 Tags: fluentcart, alipay, payment gateway, china payment
 Requires at least: 6.5
-Tested up to: 6.8.3
+Tested up to: 6.8
 Requires PHP: 8.2
 Stable tag: 1.0.5
 License: GPLv2 or later

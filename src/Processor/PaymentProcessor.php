@@ -218,7 +218,7 @@ class PaymentProcessor
         // Validate payment amount
         if ($transaction->total <= 0) {
             throw new \Exception(
-                __('Invalid payment amount. Amount must be greater than zero.', 'wpkj-fluentcart-alipay-payment')
+                esc_html__('Invalid payment amount. Amount must be greater than zero.', 'wpkj-fluentcart-alipay-payment')
             );
         }
 
@@ -227,7 +227,7 @@ class PaymentProcessor
             throw new \Exception(
                 sprintf(
                     /* translators: %s: maximum transaction amount in CNY */
-                    __('Payment amount exceeds Alipay single transaction limit (%s CNY).', 'wpkj-fluentcart-alipay-payment'),
+                    esc_html__('Payment amount exceeds Alipay single transaction limit (%s CNY).', 'wpkj-fluentcart-alipay-payment'),
                     number_format(AlipayConfig::MAX_SINGLE_TRANSACTION_AMOUNT)
                 )
             );

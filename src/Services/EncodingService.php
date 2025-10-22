@@ -82,7 +82,11 @@ class EncodingService
             
             if ($converted === false && $strict) {
                 throw new \Exception(
-                    "Failed to convert string from {$encoding} to UTF-8"
+                    sprintf(
+                        /* translators: %s: source encoding name */
+                        esc_html__('Failed to convert string from %s to UTF-8', 'wpkj-fluentcart-alipay-payment'),
+                        esc_html($encoding)
+                    )
                 );
             }
             
@@ -236,7 +240,12 @@ class EncodingService
         
         if ($converted === false) {
             throw new \Exception(
-                "Failed to convert string from {$fromEncoding} to {$toEncoding}"
+                sprintf(
+                    /* translators: 1: source encoding name, 2: target encoding name */
+                    esc_html__('Failed to convert string from %1$s to %2$s', 'wpkj-fluentcart-alipay-payment'),
+                    esc_html($fromEncoding),
+                    esc_html($toEncoding)
+                )
             );
         }
         

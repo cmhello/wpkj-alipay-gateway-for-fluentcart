@@ -54,9 +54,13 @@ function wpkj_fc_alipay_check_dependencies() {
 
 /**
  * Load plugin textdomain
+ * 
+ * Note: When hosted on WordPress.org, load_plugin_textdomain() is no longer required
+ * as WordPress automatically loads translations. However, we keep it for compatibility
+ * with manual installations and custom translation workflows.
  */
 function wpkj_fc_alipay_load_textdomain() {
-    load_plugin_textdomain(
+    load_plugin_textdomain( // phpcs:ignore PluginCheck.CodeAnalysis.DiscouragedFunctions -- Required for manual installations
         'wpkj-fluentcart-alipay-payment',
         false,
         dirname(plugin_basename(__FILE__)) . '/languages/'

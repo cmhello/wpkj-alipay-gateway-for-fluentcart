@@ -31,23 +31,32 @@ class FaceToFacePageHandler
     public function handleFaceToFacePayment()
     {
         // Debug: Log all query parameters
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Payment page route check, no sensitive action
         if (isset($_GET['fluent-cart'])) {
             Logger::info('FaceToFace Handler Check', [
-                'fluent_cart' => $_GET['fluent-cart'],
-                'order_hash' => $_GET['order_hash'] ?? 'NOT_SET',
+                // phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput -- Debug logging only
+                'fluent_cart' => sanitize_text_field(wp_unslash($_GET['fluent-cart'])),
+                // phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput -- Debug logging only
+                'order_hash' => isset($_GET['order_hash']) ? sanitize_text_field(wp_unslash($_GET['order_hash'])) : 'NOT_SET',
+                // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Debug logging only
                 'qr_code_set' => isset($_GET['qr_code']) ? 'YES' : 'NO',
-                'trx_uuid' => $_GET['trx_uuid'] ?? 'NOT_SET'
+                // phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput -- Debug logging only
+                'trx_uuid' => isset($_GET['trx_uuid']) ? sanitize_text_field(wp_unslash($_GET['trx_uuid'])) : 'NOT_SET'
             ]);
         }
 
         // Check for our custom F2F payment route
-        if (!isset($_GET['fluent-cart']) || $_GET['fluent-cart'] !== 'alipay_f2f_payment') {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput -- Route check only
+        if (!isset($_GET['fluent-cart']) || wp_unslash($_GET['fluent-cart']) !== 'alipay_f2f_payment') {
             return;
         }
 
-        $orderHash = sanitize_text_field($_GET['order_hash'] ?? '');
-        $qrCodeEncoded = sanitize_text_field($_GET['qr_code'] ?? '');
-        $trxUuid = sanitize_text_field($_GET['trx_uuid'] ?? '');
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput -- Payment page parameters
+        $orderHash = isset($_GET['order_hash']) ? sanitize_text_field(wp_unslash($_GET['order_hash'])) : '';
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput -- Payment page parameters
+        $qrCodeEncoded = isset($_GET['qr_code']) ? sanitize_text_field(wp_unslash($_GET['qr_code'])) : '';
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput -- Payment page parameters
+        $trxUuid = isset($_GET['trx_uuid']) ? sanitize_text_field(wp_unslash($_GET['trx_uuid'])) : '';
 
         Logger::info('FaceToFace Handler Started', [
             'has_order_hash' => !empty($orderHash),
@@ -136,11 +145,14 @@ class FaceToFacePageHandler
         
         // Enqueue QRCode.js library for client-side QR code generation
         // This avoids URL encoding issues with Chinese characters
+        // Note: The library file should be downloaded and placed in assets/js/vendor/
+        $qrCodeFile = WPKJ_FC_ALIPAY_PATH . 'assets/js/vendor/qrcode.min.js';
+        $qrCodeVersion = file_exists($qrCodeFile) ? filemtime($qrCodeFile) : WPKJ_FC_ALIPAY_VERSION;
         wp_enqueue_script(
             'qrcodejs',
-            'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
+            WPKJ_FC_ALIPAY_URL . 'assets/js/vendor/qrcode.min.js',
             [],
-            '1.0.0',
+            $qrCodeVersion,
             true
         );
         

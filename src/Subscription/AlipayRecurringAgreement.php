@@ -544,7 +544,7 @@ class AlipayRecurringAgreement
         return [
             'period_type' => $periodType,
             'period' => 1, // 每1个周期扣款
-            'execute_time' => date('Y-m-d'), // 首次执行时间
+            'execute_time' => gmdate('Y-m-d', current_time('timestamp')), // 首次执行时间
             'single_amount' => $amount, // 单次扣款金额
             'total_amount' => $subscription->bill_times > 0 ? 
                              Helper::toDecimal($subscription->recurring_total * $subscription->bill_times) : 
