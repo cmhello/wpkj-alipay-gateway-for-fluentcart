@@ -36,10 +36,6 @@ class OrderCancelListener
     {
         // Listen to FluentCart order status change event
         add_action('fluent_cart/order_status_changed_to_canceled', [$this, 'handleOrderCanceled'], 10, 1);
-        
-        Logger::info('OrderCancelListener Registered', [
-            'hook' => 'fluent_cart/order_status_changed_to_canceled'
-        ]);
     }
 
     /**
