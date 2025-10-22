@@ -101,19 +101,7 @@ class FaceToFacePageHandler
                 'order_id' => $order->id
             ]);
             
-            $storeSettings = new \FluentCart\Api\StoreSettings();
-            $receiptPage = $storeSettings->getReceiptPage();
-            
-            if (empty($receiptPage)) {
-                $receiptPage = home_url('/?fluent-cart=receipt');
-            }
-            
-            // FluentCart receipt page expects 'order_hash' parameter
-            $receiptUrl = add_query_arg([
-                'order_hash' => $order->uuid
-            ], $receiptPage);
-            
-            wp_redirect($receiptUrl);
+            wp_redirect($order->getReceiptUrl());
             exit;
         }
 

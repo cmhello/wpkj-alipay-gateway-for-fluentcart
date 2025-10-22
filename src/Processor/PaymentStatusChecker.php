@@ -96,7 +96,7 @@ class PaymentStatusChecker
                 wp_send_json_success([
                     'status' => 'paid',
                     'message' => __('Payment completed successfully', 'wpkj-fluentcart-alipay-payment'),
-                    'redirect_url' => $this->getReceiptUrl($order)
+                    'redirect_url' => $order->getReceiptUrl()
                 ]);
                 return;
             }
@@ -156,7 +156,7 @@ class PaymentStatusChecker
                     wp_send_json_success([
                         'status' => 'paid',
                         'message' => __('Payment completed successfully', 'wpkj-fluentcart-alipay-payment'),
-                        'redirect_url' => $this->getReceiptUrl($order)
+                        'redirect_url' => $order->getReceiptUrl()
                     ]);
                     return;
                 } elseif ($tradeStatus === 'TRADE_CLOSED') {
@@ -183,27 +183,6 @@ class PaymentStatusChecker
                 'message' => __('Failed to check payment status', 'wpkj-fluentcart-alipay-payment')
             ]);
         }
-    }
-
-    /**
-     * Get receipt URL for order
-     * 
-     * @param Order $order Order instance
-     * @return string Receipt URL
-     */
-    private function getReceiptUrl($order)
-    {
-        $storeSettings = new \FluentCart\Api\StoreSettings();
-        $receiptPage = $storeSettings->getReceiptPage();
-
-        if (empty($receiptPage)) {
-            $receiptPage = home_url('/?fluent-cart=receipt');
-        }
-
-        // FluentCart receipt page expects 'order_hash' parameter, not 'order_uuid'
-        return add_query_arg([
-            'order_hash' => $order->uuid
-        ], $receiptPage);
     }
 
     /**

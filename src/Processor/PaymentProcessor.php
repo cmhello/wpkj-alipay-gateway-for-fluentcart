@@ -242,7 +242,7 @@ class PaymentProcessor
         $body = $this->buildBody($order);
 
         // Get URLs (build manually to avoid HTML encoding)
-        $returnUrl = $this->getReturnUrl($transaction->uuid);
+        $returnUrl = $this->getReturnUrl($transaction);
         $notifyUrl = $this->getNotifyUrl();
 
         return [
@@ -332,28 +332,27 @@ class PaymentProcessor
     /**
      * Get return URL
      * 
-     * @param string $transactionUuid Transaction UUID
+     * @param OrderTransaction $transaction Transaction instance
      * @return string Return URL
      */
-    private function getReturnUrl($transactionUuid)
+    private function getReturnUrl($transaction)
     {
         // CRITICAL FIX: Do NOT include 'method' parameter!
         // Alipay will add its own method=alipay.trade.page.pay.return
         // Having two 'method' parameters causes "suspected-attack" error
         
-        $storeSettings = new \FluentCart\Api\StoreSettings();
-        $receiptPage = $storeSettings->getReceiptPage();
-        
-        // If receipt page not configured, use FluentCart routing
-        if (empty($receiptPage)) {
-            $receiptPage = home_url('/?fluent-cart=receipt');
+        $order = $transaction->order;
+        if (!$order) {
+            // Fallback if order not found
+            return home_url('/?fluent-cart=receipt&trx_hash=' . $transaction->uuid);
         }
         
-        // Only use unique identifiers that won't conflict with Alipay's parameters
+        // Use FluentCart's built-in method to get receipt URL
+        // Add transaction hash for tracking
         return add_query_arg([
-            'trx_hash' => $transactionUuid,
+            'trx_hash' => $transaction->uuid,
             'fct_redirect' => 'yes'
-        ], $receiptPage);
+        ], $order->getReceiptUrl());
     }
 
     /**
