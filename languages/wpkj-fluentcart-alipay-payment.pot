@@ -21,7 +21,7 @@ msgstr ""
 
 #. Plugin URI of the plugin
 #: wpkj-fluentcart-alipay-payment.php
-msgid "https://www.wpdaxue.com/wpkj-fluentcart-alipay-payment"
+msgid "https://www.wpdaxue.com/wpkj-fluentcart-alipay-payment.html"
 msgstr ""
 
 #. Description of the plugin

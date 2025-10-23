@@ -202,6 +202,20 @@ class AlipayRecurringAgreement
             if ($status === 'NORMAL') {
                 $subscription->vendor_subscription_id = $agreementNo;
                 $subscription->updateMeta('auto_renew_enabled', true);
+                
+                // Set next billing date if not already set (critical for cron scheduling)
+                if (empty($subscription->next_billing_date)) {
+                    $nextBillingDate = $subscription->guessNextBillingDate(true);
+                    $subscription->next_billing_date = $nextBillingDate;
+                    
+                    Logger::info('Next Billing Date Set After Agreement Sign', [
+                        'subscription_id' => $subscription->id,
+                        'next_billing_date' => $nextBillingDate,
+                        'trial_days' => $subscription->trial_days,
+                        'billing_interval' => $subscription->billing_interval
+                    ]);
+                }
+                
                 $subscription->save();
 
                 Logger::info('Recurring Agreement Activated', [

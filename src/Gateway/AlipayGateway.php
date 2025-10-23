@@ -514,147 +514,153 @@ class AlipayGateway extends AbstractPaymentGateway
      * @param array $args Additional arguments
      * @return array|\WP_Error Refund result
      */
+    /**
+     * Process refund through Alipay API
+     * 
+     * This method is called by FluentCart's Refund service when processing refunds.
+     * It only handles the Alipay API call and returns the vendor refund ID.
+     * FluentCart automatically handles transaction creation, order updates, and events.
+     * 
+     * @param \FluentCart\App\Models\OrderTransaction $transaction Original payment transaction
+     * @param int $amount Refund amount in cents
+     * @param array $args Additional arguments (reason, etc.)
+     * @return string|\WP_Error Alipay refund ID (trade_no) or WP_Error on failure
+     */
     public function processRefund($transaction, $amount, $args)
     {
-        if (!$amount) {
+        if (!$amount || $amount <= 0) {
             return new \WP_Error(
-                'alipay_refund_error',
-                __('Refund amount is required.', 'wpkj-fluentcart-alipay-payment')
+                'invalid_refund_amount',
+                __('Refund amount is required and must be greater than zero.', 'wpkj-fluentcart-alipay-payment')
             );
         }
 
-        // Use TransactionHelper for idempotency protection
         try {
-            return TransactionHelper::withIdempotencyLock(
-                'refund',
-                $transaction->uuid,
-                function() use ($transaction, $amount, $args) {
-                    return $this->executeRefund($transaction, $amount, $args);
-                }
-            );
-        } catch (\Exception $e) {
-            Logger::error('Refund Idempotency Lock Failed', $e->getMessage());
-            return new \WP_Error('alipay_refund_error', $e->getMessage());
-        }
-    }
-
-    /**
-     * Execute refund operation
-     * 
-     * @param object $transaction Transaction object
-     * @param int $amount Refund amount in cents
-     * @param array $args Additional arguments
-     * @return array|\WP_Error Refund result
-     */
-    private function executeRefund($transaction, $amount, $args)
-    {
-        try {
-            // Validate transaction is refundable
-            $validation = TransactionHelper::validateRefundable($transaction);
-            if (is_wp_error($validation)) {
-                return $validation;
-            }
-
             $api = new \WPKJFluentCart\Alipay\API\AlipayAPI($this->settings);
-
-            // Use TransactionHelper to get out_trade_no
-            $outTradeNo = TransactionHelper::getOutTradeNo($transaction);
             
-            $refundAmount = Helper::toDecimal($amount);
+            // Convert amount from cents to decimal
+            $refundAmountDecimal = Helper::toDecimal($amount);
             
-            // Use TransactionHelper to generate unique refund request number
-            $outRequestNo = TransactionHelper::generateRefundRequestNo($transaction);
-
-            $refundParams = [
-                'refund_amount' => $refundAmount,
-                'out_request_no' => $outRequestNo,
-                'refund_reason' => Arr::get($args, 'reason', 'Customer requested refund')
-            ];
+            // Get identifiers from transaction
+            $outTradeNo = $transaction->meta['out_trade_no'] ?? null;
+            $tradeNo = $transaction->vendor_charge_id;
             
-            // Prefer trade_no over out_trade_no if available
-            if (!empty($transaction->vendor_charge_id)) {
-                $refundParams['trade_no'] = $transaction->vendor_charge_id;
-                Logger::info('Manual Refund Using trade_no', [
-                    'transaction_uuid' => $transaction->uuid,
-                    'trade_no' => $transaction->vendor_charge_id
+            // Validate we have at least one identifier
+            if (empty($outTradeNo) && empty($tradeNo)) {
+                Logger::error('Missing Transaction Identifiers for Refund', [
+                    'transaction_id' => $transaction->id,
+                    'transaction_uuid' => $transaction->uuid
                 ]);
-            } else {
-                $refundParams['out_trade_no'] = $outTradeNo;
-                Logger::info('Manual Refund Using out_trade_no', [
-                    'transaction_uuid' => $transaction->uuid,
-                    'out_trade_no' => $outTradeNo
-                ]);
-            }
-            
-            $result = $api->refund($refundParams);
-
-            if (is_wp_error($result)) {
-                return $result;
-            }
-
-            // Verify Alipay refund response
-            $responseKey = 'alipay_trade_refund_response';
-            if (!isset($result[$responseKey])) {
-                Logger::error('Invalid Refund Response Structure', [
-                    'transaction_uuid' => $transaction->uuid,
-                    'response_keys' => array_keys($result)
-                ]);
+                
                 return new \WP_Error(
-                    'alipay_refund_error',
-                    __('Invalid refund response from Alipay', 'wpkj-fluentcart-alipay-payment')
+                    'missing_transaction_id',
+                    __('Cannot process refund: missing both trade_no and out_trade_no', 'wpkj-fluentcart-alipay-payment')
                 );
             }
-
+            
+            // Generate unique refund request number
+            $outRequestNo = $transaction->uuid . '-' . time() . '-' . substr(md5(uniqid()), 0, 8);
+            
+            $refundParams = [
+                'refund_amount' => $refundAmountDecimal,
+                'out_request_no' => $outRequestNo,
+                'refund_reason' => $args['reason'] ?? 'Order refund'
+            ];
+            
+            // Prefer trade_no over out_trade_no for better success rate
+            if (!empty($tradeNo)) {
+                $refundParams['trade_no'] = $tradeNo;
+            } else {
+                $refundParams['out_trade_no'] = $outTradeNo;
+            }
+            
+            Logger::info('Processing Alipay Refund via FluentCart Standard Service', [
+                'transaction_id' => $transaction->id,
+                'refund_amount' => $refundAmountDecimal,
+                'out_request_no' => $outRequestNo,
+                'using_trade_no' => !empty($tradeNo)
+            ]);
+            
+            // Call Alipay refund API
+            $result = $api->refund($refundParams);
+            
+            if (is_wp_error($result)) {
+                Logger::error('Alipay Refund API Error', [
+                    'transaction_id' => $transaction->id,
+                    'error' => $result->get_error_message()
+                ]);
+                return $result;
+            }
+            
+            // Validate response structure
+            $responseKey = 'alipay_trade_refund_response';
+            if (!isset($result[$responseKey])) {
+                Logger::error('Invalid Alipay Refund Response Structure', [
+                    'transaction_id' => $transaction->id
+                ]);
+                
+                return new \WP_Error(
+                    'invalid_response',
+                    __('Invalid response from Alipay', 'wpkj-fluentcart-alipay-payment')
+                );
+            }
+            
             $refundResponse = $result[$responseKey];
             
             // Check business result code
             if (!isset($refundResponse['code']) || $refundResponse['code'] !== '10000') {
-                $errorMsg = $refundResponse['sub_msg'] ?? $refundResponse['msg'] ?? __('Refund failed', 'wpkj-fluentcart-alipay-payment');
+                $errorMsg = $refundResponse['sub_msg'] ?? $refundResponse['msg'] ?? 'Unknown error';
                 
-                Logger::error('Refund Failed', [
-                    'transaction_uuid' => $transaction->uuid,
+                Logger::error('Alipay Refund Failed', [
+                    'transaction_id' => $transaction->id,
                     'code' => $refundResponse['code'] ?? 'unknown',
-                    'message' => $errorMsg,
-                    'sub_code' => $refundResponse['sub_code'] ?? ''
+                    'message' => $errorMsg
                 ]);
                 
-                return new \WP_Error('alipay_refund_error', $errorMsg);
+                return new \WP_Error(
+                    'refund_failed',
+                    sprintf(
+                        /* translators: %s: Alipay error message */
+                        __('Alipay refund failed: %s', 'wpkj-fluentcart-alipay-payment'),
+                        $errorMsg
+                    )
+                );
             }
-
-            // Verify refunded amount matches request
-            if (isset($refundResponse['refund_fee'])) {
-                $actualRefundedAmount = Helper::toCents($refundResponse['refund_fee']);
-                if ($actualRefundedAmount !== $amount) {
-                    Logger::warning('Refund Amount Mismatch', [
-                        'transaction_uuid' => $transaction->uuid,
-                        'requested' => $amount,
-                        'actual_refunded' => $actualRefundedAmount,
-                        'difference' => abs($actualRefundedAmount - $amount)
-                    ]);
-                }
+            
+            // Check fund_change status
+            if (isset($refundResponse['fund_change']) && $refundResponse['fund_change'] === 'N') {
+                Logger::warning('Alipay Refund Succeeded But No Fund Change', [
+                    'transaction_id' => $transaction->id,
+                    'trade_no' => $refundResponse['trade_no'] ?? ''
+                ]);
             }
-
-            Logger::info('Refund Successful', [
-                'transaction_uuid' => $transaction->uuid,
-                'amount' => $refundAmount,
-                'trade_no' => $refundResponse['trade_no'] ?? '',
-                'fund_change' => $refundResponse['fund_change'] ?? ''
+            
+            // Return Alipay's trade_no as vendor refund ID
+            // FluentCart will automatically use this to populate vendor_charge_id in refund transaction
+            $vendorRefundId = $refundResponse['trade_no'] ?? $outRequestNo;
+            
+            Logger::info('Alipay Refund Successful', [
+                'transaction_id' => $transaction->id,
+                'vendor_refund_id' => $vendorRefundId,
+                'fund_change' => $refundResponse['fund_change'] ?? 'unknown'
             ]);
-
-            // Update transaction meta with refund information
-            $transaction->meta = array_merge($transaction->meta ?? [], [
-                'refunded_at' => current_time('mysql'),
-                'refund_trade_no' => $refundResponse['trade_no'] ?? '',
-                'refund_amount' => $refundAmount,
-                'refund_reason' => Arr::get($args, 'reason', 'Customer requested refund')
-            ]);
-            $transaction->save();
-
-            return $result;
-
+            
+            return $vendorRefundId;
+            
         } catch (\Exception $e) {
-            Logger::error('Refund Error', $e->getMessage());
-            return new \WP_Error('alipay_refund_error', $e->getMessage());
+            Logger::error('Alipay Refund Exception', [
+                'transaction_id' => $transaction->id,
+                'exception' => $e->getMessage()
+            ]);
+            
+            return new \WP_Error(
+                'refund_exception',
+                sprintf(
+                    /* translators: %s: exception message */
+                    __('Refund processing error: %s', 'wpkj-fluentcart-alipay-payment'),
+                    $e->getMessage()
+                )
+            );
         }
     }
 

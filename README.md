@@ -349,7 +349,31 @@ define('WP_DEBUG_LOG', true);
 
 ## 🆕 Changelog
 
-### Version 1.0.6 (Current)
+### Version 1.0.7 (Current)
+- 🔥 **CRITICAL FIX**: Fixed subscription renewals not triggering due to missing next_billing_date
+- 🔥 **CRITICAL FIX**: Fixed bill_count not properly calculated for subscriptions
+- ♻️ **REFACTORING**: Eliminated ~240 lines of duplicate code between NotifyHandler and PaymentStatusChecker
+- ✅ Fixed next_billing_date not being set for initial subscription payments
+- ✅ Fixed next_billing_date not being set after recurring agreement sign success
+- ✅ Fixed initial subscription payment showing bill_count as 0 instead of 1
+- ✅ Fixed manual bill_count increment replaced with FluentCart's automatic calculation
+- ✅ Created centralized SubscriptionService class for all subscription business logic
+- ✅ Refactored NotifyHandler.php to use shared SubscriptionService (-120 lines)
+- ✅ Refactored PaymentStatusChecker.php to use shared SubscriptionService (-120 lines)
+- ✅ Added source tracking parameter (webhook/polling) for better debugging
+- ✅ Improved code maintainability with DRY (Don't Repeat Yourself) principle
+- ✅ Architecture now consistent with WeChat payment plugin
+- ✅ Improved initial subscription payment handling to properly set next_billing_date
+- ✅ Now using SubscriptionService::syncSubscriptionStates() to auto-calculate bill_count
+- ✅ Enhanced subscription billing date logic using FluentCart's guessNextBillingDate()
+- ✅ Proper EOT (End of Term) detection based on actual transaction count
+- ✅ Added comprehensive logging for subscription billing date and bill_count updates
+- ✅ Better handling of trial periods in next billing date calculation
+- 📌 **Note**: This ensures FluentCart's cron system can properly schedule subscription renewals
+- 📌 **Note**: bill_count is automatically calculated by querying OrderTransaction records
+- 📌 **Note**: Code reduced by ~35 lines total, duplicate code eliminated completely
+
+### Version 1.0.6
 - ✅ Added TransactionHelper utility class for idempotency protection
 - ✅ Added automatic retry mechanism for failed subscription renewals
 - ✅ Added WordPress Cron-based renewal retry scheduling
@@ -416,7 +440,7 @@ define('WP_DEBUG_LOG', true);
 For support, bug reports, and feature requests:
 
 - **Website**: [https://www.wpdaxue.com](https://www.wpdaxue.com)
-- **Documentation**: [https://www.wpdaxue.com/wpkj-fluentcart-alipay-payment](https://www.wpdaxue.com/wpkj-fluentcart-alipay-payment)
+- **Documentation**: [https://www.wpdaxue.com/wpkj-fluentcart-alipay-payment.html](https://www.wpdaxue.com/wpkj-fluentcart-alipay-payment.html)
 - **Email**: support@wpdaxue.com
 
 ## 📄 License

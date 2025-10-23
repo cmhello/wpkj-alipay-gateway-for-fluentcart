@@ -6,6 +6,7 @@ use FluentCart\App\Models\OrderTransaction;
 use FluentCart\App\Models\Subscription;
 use FluentCart\App\Helpers\Status;
 use WPKJFluentCart\Alipay\API\AlipayAPI;
+use WPKJFluentCart\Alipay\Services\SubscriptionService;
 use WPKJFluentCart\Alipay\Config\AlipayConfig;
 use WPKJFluentCart\Alipay\Gateway\AlipaySettingsBase;
 use WPKJFluentCart\Alipay\Processor\PaymentProcessor;
@@ -180,13 +181,13 @@ class NotifyHandler
         }
 
         // Check if this is a subscription payment
-        if ($this->isSubscriptionTransaction($transaction)) {
+        if (SubscriptionService::isSubscriptionTransaction($transaction)) {
             Logger::info('Processing Subscription Payment Success', [
                 'transaction_uuid' => $transaction->uuid,
                 'trade_no' => $data['trade_no'] ?? ''
             ]);
             
-            $this->handleSubscriptionPaymentSuccess($transaction, $data);
+            SubscriptionService::handleSubscriptionPaymentSuccess($transaction, $data, 'webhook');
         } else {
             // Regular payment processing
             $this->processor->confirmPaymentSuccess($transaction, $data);
@@ -316,103 +317,6 @@ class NotifyHandler
         // Only 'success' or 'fail' are valid responses - no escaping needed for these fixed strings
         echo esc_html($result);
         exit;
-    }
-
-    /**
-     * Check if transaction is for a subscription
-     * 
-     * @param OrderTransaction $transaction
-     * @return bool
-     */
-    private function isSubscriptionTransaction($transaction)
-    {
-        // Check transaction meta
-        if (isset($transaction->meta['is_subscription']) && $transaction->meta['is_subscription']) {
-            return true;
-        }
-
-        // Check if order has subscription
-        $order = $transaction->order;
-        if ($order && $order->subscription_id) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Handle subscription payment success
-     * 
-     * @param OrderTransaction $transaction
-     * @param array $data Notification data
-     * @return void
-     */
-    private function handleSubscriptionPaymentSuccess($transaction, $data)
-    {
-        // First, confirm the payment
-        $this->processor->confirmPaymentSuccess($transaction, $data);
-
-        // Get subscription
-        $subscriptionId = $transaction->meta['subscription_id'] ?? $transaction->order->subscription_id ?? null;
-        
-        if (!$subscriptionId) {
-            Logger::warning('Subscription ID Not Found in Transaction', [
-                'transaction_uuid' => $transaction->uuid
-            ]);
-            return;
-        }
-
-        $subscription = Subscription::find($subscriptionId);
-        
-        if (!$subscription) {
-            Logger::error('Subscription Not Found', [
-                'subscription_id' => $subscriptionId,
-                'transaction_uuid' => $transaction->uuid
-            ]);
-            return;
-        }
-
-        // Update subscription status
-        if ($subscription->status !== Status::SUBSCRIPTION_ACTIVE) {
-            $subscription->status = Status::SUBSCRIPTION_ACTIVE;
-            $subscription->save();
-
-            Logger::info('Subscription Activated', [
-                'subscription_id' => $subscription->id,
-                'transaction_uuid' => $transaction->uuid
-            ]);
-        }
-
-        // Increment bill count for renewals
-        if ($transaction->order->type === 'renewal') {
-            $subscription->bill_count = ($subscription->bill_count ?? 0) + 1;
-            
-            // Calculate next billing date using WordPress timezone-safe function
-            $interval = $subscription->billing_interval;
-            $nextBillingDate = gmdate('Y-m-d H:i:s', strtotime("+1 {$interval}", current_time('timestamp')));
-            
-            // Check if subscription should complete (limited billing cycles)
-            if ($subscription->bill_times > 0 && $subscription->bill_count >= $subscription->bill_times) {
-                $subscription->status = Status::SUBSCRIPTION_COMPLETED;
-                $subscription->next_billing_date = null;
-                
-                Logger::info('Subscription Completed (Max Billing Cycles Reached)', [
-                    'subscription_id' => $subscription->id,
-                    'bill_count' => $subscription->bill_count,
-                    'bill_times' => $subscription->bill_times
-                ]);
-            } else {
-                $subscription->next_billing_date = $nextBillingDate;
-                
-                Logger::info('Next Billing Date Updated', [
-                    'subscription_id' => $subscription->id,
-                    'next_billing_date' => $nextBillingDate,
-                    'bill_count' => $subscription->bill_count
-                ]);
-            }
-            
-            $subscription->save();
-        }
     }
 
     /**

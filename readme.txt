@@ -1,11 +1,11 @@
 === WPKJ FluentCart Alipay Payment ===
 Contributors: cmhello
-Donate link: https://www.wpdaxue.com/wpkj-fluentcart-alipay-payment
+Donate link: https://www.wpdaxue.com/wpkj-fluentcart-alipay-payment.html
 Tags: fluentcart, alipay, payment gateway, china payment
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.2
-Stable tag: 1.0.6
+Stable tag: 1.0.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -175,6 +175,44 @@ Enable QR code payments in settings. Customers can scan QR codes with their Alip
 
 == Changelog ==
 
+= 1.0.7 =
+Release Date: October 23, 2025
+
+* Fixed: Critical issue where next_billing_date was not set for initial subscription payments
+* Fixed: Subscription renewal not triggering due to missing next billing date
+* Fixed: Next billing date not set after recurring agreement sign success
+* Fixed: Critical issue where bill_count was not properly calculated for subscriptions
+* Fixed: Initial subscription payment showing bill_count as 0 instead of 1
+* Fixed: Manual bill_count increment replaced with FluentCart's automatic calculation
+* Fixed: Auto-cancel subscription feature not working - was using wrong field to find subscription
+* Fixed: OrderCancelListener now correctly uses Subscription->parent_order_id instead of Order->subscription_id
+* Security: Enhanced duplicate refund prevention mechanism in automatic refund feature
+* Security: Now checks ALL existing refunds instead of just first one to prevent duplicates
+* Security: Added comprehensive logging for refund duplicate prevention
+* Security: Validates original transaction UUID match before blocking duplicate refunds
+* Refactoring: Migrated to FluentCart standard Refund service for all refund operations
+* Refactoring: Simplified AlipayGateway processRefund() method to only handle API calls (~80% code reduction)
+* Refactoring: Simplified RefundProcessor to use FluentCart's transaction/order management (~60% code reduction)
+* Refactoring: Created centralized SubscriptionService class eliminating ~240 lines of duplicate code
+* Refactoring: NotifyHandler and PaymentStatusChecker now use shared subscription service
+* Refactoring: Architecture now consistent with WeChat payment plugin
+* Improved: FluentCart now handles all transaction creation, order updates, and event triggering
+* Improved: Better separation of concerns - Gateway handles payment API, FluentCart handles business logic
+* Improved: Added source tracking (webhook/polling) for better debugging
+* Improved: Code maintainability with DRY principle - single source of truth for subscription and refund logic
+* Improved: Initial subscription payment now properly sets next_billing_date using FluentCart's guessNextBillingDate()
+* Improved: Now using SubscriptionService::syncSubscriptionStates() to auto-calculate bill_count from database
+* Improved: Proper EOT (End of Term) detection based on actual transaction count
+* Improved: Enhanced logging for subscription billing date and bill_count updates
+* Improved: Better handling of trial periods in next billing date calculation
+* Improved: Order cancellation flow now properly identifies and cancels associated subscriptions
+* Improved: Automatic refund now includes detailed security check logs
+* Note: This fix ensures FluentCart's cron system can properly schedule subscription renewals
+* Note: bill_count is now automatically calculated by querying OrderTransaction records
+* Note: Total code reduced by ~35 lines, duplicate code eliminated completely
+* Note: In FluentCart, subscriptions are linked via Subscription->parent_order_id, not Order->subscription_id
+* Note: Duplicate refund prevention protects against concurrent order cancellation operations
+
 = 1.0.6 =
 Release Date: October 23, 2025
 
@@ -253,6 +291,9 @@ Release Date: October 15, 2025
 
 == Upgrade Notice ==
 
+= 1.0.7 =
+Critical fixes and code refactoring for subscription functionality! This version fixes issues where next_billing_date and bill_count were not properly set after payments, preventing automatic renewals. Also eliminates code duplication for better maintainability. Highly recommended for all subscription users.
+
 = 1.0.6 =
 Major subscription reliability improvements with automatic retry mechanism and enhanced security. Highly recommended for all users.
 
@@ -273,7 +314,7 @@ Initial release of WPKJ FluentCart Alipay Payment gateway.
 For comprehensive documentation, tutorials, and support:
 
 * **Official Website**: [https://www.wpdaxue.com](https://www.wpdaxue.com)
-* **Documentation**: [https://www.wpdaxue.com/wpkj-fluentcart-alipay-payment](https://www.wpdaxue.com/wpkj-fluentcart-alipay-payment)
+* **Documentation**: [https://www.wpdaxue.com/wpkj-fluentcart-alipay-payment.html](https://www.wpdaxue.com/wpkj-fluentcart-alipay-payment.html)
 * **Support Email**: support@wwpdaxue.com
 * **GitHub**: Report issues and contribute
 

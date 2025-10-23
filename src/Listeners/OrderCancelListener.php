@@ -53,13 +53,6 @@ class OrderCancelListener
             return;
         }
 
-        Logger::info('Order Canceled Event Received', [
-            'order_id' => $order->id,
-            'order_type' => $order->type ?? 'unknown',
-            'payment_method' => $order->payment_method ?? 'unknown',
-            'subscription_id' => $order->subscription_id ?? null
-        ]);
-
         // Check if auto-cancel feature is enabled in settings
         if (!$this->isAutoCancelEnabled($order)) {
             Logger::info('Order Cancel Event: Auto-cancel subscription feature is disabled', [
@@ -69,34 +62,35 @@ class OrderCancelListener
             return;
         }
 
-        // Only process if order has an associated subscription
-        if (!$order->subscription_id) {
-            Logger::debug('Order Cancel Event: No subscription associated', [
-                'order_id' => $order->id
-            ]);
-            return;
-        }
-
         // Skip renewal orders - only cancel subscription on parent order cancellation
         if ($order->type === 'renewal') {
             Logger::info('Order Cancel Event: Skipping renewal order', [
                 'order_id' => $order->id,
-                'subscription_id' => $order->subscription_id,
                 'reason' => 'Renewal orders should not trigger subscription cancellation'
             ]);
             return;
         }
 
-        // Get subscription
-        $subscription = Subscription::find($order->subscription_id);
+        // For initial subscription orders, find the subscription by parent_order_id
+        // Note: Order->subscription_id doesn't exist in FluentCart
+        // Instead, Subscription->parent_order_id points to the initial order
+        $subscription = Subscription::where('parent_order_id', $order->id)->first();
         
         if (!$subscription) {
-            Logger::error('Order Cancel Event: Subscription not found', [
+            Logger::debug('Order Cancel Event: No subscription associated with this order', [
                 'order_id' => $order->id,
-                'subscription_id' => $order->subscription_id
+                'order_type' => $order->type ?? 'unknown'
             ]);
             return;
         }
+
+        Logger::info('Order Canceled Event Received', [
+            'order_id' => $order->id,
+            'order_type' => $order->type ?? 'unknown',
+            'payment_method' => $order->payment_method ?? 'unknown',
+            'subscription_id' => $subscription->id,
+            'subscription_status' => $subscription->status
+        ]);
 
         // Check if subscription is already canceled
         if ($subscription->status === Status::SUBSCRIPTION_CANCELED) {
