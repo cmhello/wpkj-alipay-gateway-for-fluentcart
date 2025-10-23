@@ -349,37 +349,67 @@ define('WP_DEBUG_LOG', true);
 
 ## 🆕 Changelog
 
-### Version 1.0.5 (Current)
+### Version 1.0.6 (Current)
+- ✅ Added TransactionHelper utility class for idempotency protection
+- ✅ Added automatic retry mechanism for failed subscription renewals
+- ✅ Added WordPress Cron-based renewal retry scheduling
+- ✅ Added comprehensive error handling and logging for renewals
+- ✅ Improved subscription renewal process with FluentCart standard methods
+- ✅ Improved exception message security with esc_html() escaping
+- ✅ Improved timezone safety using gmdate() instead of date()
+- ✅ Fixed WordPress coding standards compliance
+- ✅ Fixed translator comments for all placeholder strings
+- ✅ Enhanced XSS protection for all output
+- ✅ Optimized transaction lookup and duplicate detection
+
+### Version 1.0.5
 - ✅ Added translator comments for all placeholder strings
-- ✅ Improved subscription cancellation sync with orders
-- ✅ Enhanced encoding handling for Chinese characters
-- ✅ Fixed Face-to-Face payment amount display
-- ✅ Updated POT translation template
-- ✅ Performance optimizations
+- ✅ Added comprehensive POT translation template
+- ✅ Improved subscription cancellation sync with order cancellation
+- ✅ Improved UTF-8 encoding handling for Chinese characters
+- ✅ Improved Face-to-Face payment amount formatting
+- ✅ Fixed order number display in payment subject
+- ✅ Fixed multiple placeholder string ordering for proper translation
+- ✅ Updated documentation with detailed configuration guide
+- ✅ Performance optimized webhook processing
 
 ### Version 1.0.4
-- Added automatic subscription cancellation on order cancel
+- Added automatic subscription cancellation when parent order is cancelled
+- Added configurable subscription cancellation behavior
 - Improved recurring agreement handling
-- Enhanced error messages
+- Improved error messages and logging
+- Fixed subscription status synchronization issues
 
 ### Version 1.0.3  
-- Fixed UTF-8 encoding issues
-- Added Face-to-Face QR code payment
-- Improved mobile detection
+- Added Face-to-Face QR code payment support
+- Added enhanced mobile device detection
+- Fixed UTF-8 encoding issues with Chinese characters
+- Fixed subject line truncation for long product names
+- Improved payment page rendering performance
 
 ### Version 1.0.2
 - Added automatic refund feature
-- Enhanced webhook handling
-- Bug fixes
+- Added refund activity logging
+- Improved webhook security validation
+- Fixed amount mismatch detection
+- Fixed timezone issues with Beijing time
 
 ### Version 1.0.1
-- Added subscription support
-- Improved error handling
+- Added full subscription payment support
+- Added recurring agreement integration
+- Added trial period handling
+- Improved error handling and logging
+- Fixed cart session cleanup for repeat purchases
 
 ### Version 1.0.0
 - Initial release
-- Multi-platform payment support
+- Multi-platform payment support (PC, Mobile, App)
+- Automatic client detection
 - Basic refund functionality
+- Multi-currency support
+- Test mode/Sandbox support
+- Webhook notification handling
+- i18n/l10n ready
 
 ## 💬 Support
 
