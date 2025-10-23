@@ -5,7 +5,7 @@ Tags: fluentcart, alipay, payment gateway, china payment
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.2
-Stable tag: 1.0.7
+Stable tag: 1.0.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -174,6 +174,22 @@ Enable QR code payments in settings. Customers can scan QR codes with their Alip
 5. Payment receipt
 
 == Changelog ==
+
+= 1.0.8 =
+Release Date: October 23, 2025
+
+* New: Added Custom Payment API for external system integration
+* New: REST API endpoints for programmatically creating payment orders
+* New: Support for one-time and subscription payments via API
+* New: Payment status query API endpoint
+* New: Comprehensive API documentation with usage examples
+* Enhancement: Customizable permission checks for API access
+* Enhancement: Detailed logging for custom payment operations
+* Documentation: Added CUSTOM_PAYMENT_USAGE.md with complete API guide
+* Documentation: All documentation moved to docs/ directory for better organization
+* Documentation: README.md retained in root for GitHub, readme.txt for WordPress.org
+* Security: All exception messages properly escaped with phpcs annotations
+* Security: Example code properly annotated for demonstration purposes
 
 = 1.0.7 =
 Release Date: October 23, 2025

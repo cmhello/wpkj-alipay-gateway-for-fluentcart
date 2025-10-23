@@ -6,7 +6,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wpkj-fluentcart-"
 "alipay-payment\n"
 "POT-Creation-Date: 2025-10-22 23:59+0800\n"
-"PO-Revision-Date: 2025-10-23 00:11+0800\n"
+"PO-Revision-Date: 2025-10-23 20:34+0800\n"
 "Last-Translator: WordPress大学 <support@wpdaxue.com>\n"
 "Language-Team: WordPress大学<support@wpdaxue.com>\n"
 "Language: zh_CN\n"
@@ -351,7 +351,7 @@ msgstr "由于订单取消，订阅 #%d 已自动取消"
 
 #: src/Processor/FaceToFacePageHandler.php:182
 msgid "Scan QR Code to Pay with Alipay"
-msgstr "扫描二维码使用支付宝支付"
+msgstr "请使用支付宝扫码付款"
 
 #: src/Processor/FaceToFacePageHandler.php:183
 msgid "Waiting for payment..."

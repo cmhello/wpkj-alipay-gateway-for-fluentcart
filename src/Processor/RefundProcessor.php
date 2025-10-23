@@ -224,6 +224,20 @@ class RefundProcessor
                 'refund_type' => 'automatic' // Custom meta to identify automatic refunds
             ]);
 
+            // Check if result is WP_Error
+            if (is_wp_error($result)) {
+                Logger::error('Auto-refund Failed via FluentCart Service', [
+                    'order_id' => $order->id,
+                    'error_code' => $result->get_error_code(),
+                    'error_message' => $result->get_error_message()
+                ]);
+                
+                $this->addOrderLog($order, 'Auto-refund Failed',
+                    sprintf('FluentCart refund service error: %s', $result->get_error_message())
+                );
+                return;
+            }
+
             if (isset($result['refund_transaction'])) {
                 // Update refund transaction meta to mark as automatic
                 $refundTransaction = $result['refund_transaction'];
@@ -246,6 +260,16 @@ class RefundProcessor
                         Helper::formatAmount($refundAmount, $order->currency),
                         $result['vendor_refund_id'] ?? 'N/A'
                     )
+                );
+            } else {
+                // Unexpected result format
+                Logger::warning('Auto-refund Unexpected Result Format', [
+                    'order_id' => $order->id,
+                    'result' => $result
+                ]);
+                
+                $this->addOrderLog($order, 'Auto-refund Warning',
+                    'Refund processed but unexpected result format from FluentCart service'
                 );
             }
 

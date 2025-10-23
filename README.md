@@ -62,6 +62,7 @@ Comprehensive subscription payment support with dual-mode strategy:
 - **Webhook Integration**: Real-time payment notifications
 - **Clean Architecture**: PSR-4 autoloading, namespaced
 - **Hooks & Filters**: Extensive customization points
+- **Custom Payment API**: REST API for external system integration
 
 ## 📋 Requirements
 
@@ -206,6 +207,7 @@ wpkj-fluentcart-alipay-payment/
 │   │   ├── PaymentStatusChecker.php
 │   │   └── RefundProcessor.php
 │   ├── Services/         # Business logic services
+│   │   ├── CustomPaymentService.php
 │   │   ├── EncodingService.php
 │   │   ├── Logger.php
 │   │   └── OrderService.php
@@ -217,6 +219,8 @@ wpkj-fluentcart-alipay-payment/
 │   └── Webhook/          # Webhook handlers
 │       ├── NotifyHandler.php
 │       └── ReturnHandler.php
+│   ├── API/              # REST API endpoints
+│   │   └── CustomPaymentAPI.php
 ├── assets/
 │   ├── css/             # Stylesheets
 │   └── js/              # JavaScript files
@@ -346,94 +350,6 @@ define('WP_DEBUG_LOG', true);
 - [Webhook Configuration](https://opendocs.alipay.com/open/270/105902)
 - [Recurring Payment Service](https://opendocs.alipay.com/open/20190319114403226822)
 - [FluentCart Documentation](https://fluentcart.com/docs/)
-
-## 🆕 Changelog
-
-### Version 1.0.7 (Current)
-- 🔥 **CRITICAL FIX**: Fixed subscription renewals not triggering due to missing next_billing_date
-- 🔥 **CRITICAL FIX**: Fixed bill_count not properly calculated for subscriptions
-- ♻️ **REFACTORING**: Eliminated ~240 lines of duplicate code between NotifyHandler and PaymentStatusChecker
-- ✅ Fixed next_billing_date not being set for initial subscription payments
-- ✅ Fixed next_billing_date not being set after recurring agreement sign success
-- ✅ Fixed initial subscription payment showing bill_count as 0 instead of 1
-- ✅ Fixed manual bill_count increment replaced with FluentCart's automatic calculation
-- ✅ Created centralized SubscriptionService class for all subscription business logic
-- ✅ Refactored NotifyHandler.php to use shared SubscriptionService (-120 lines)
-- ✅ Refactored PaymentStatusChecker.php to use shared SubscriptionService (-120 lines)
-- ✅ Added source tracking parameter (webhook/polling) for better debugging
-- ✅ Improved code maintainability with DRY (Don't Repeat Yourself) principle
-- ✅ Architecture now consistent with WeChat payment plugin
-- ✅ Improved initial subscription payment handling to properly set next_billing_date
-- ✅ Now using SubscriptionService::syncSubscriptionStates() to auto-calculate bill_count
-- ✅ Enhanced subscription billing date logic using FluentCart's guessNextBillingDate()
-- ✅ Proper EOT (End of Term) detection based on actual transaction count
-- ✅ Added comprehensive logging for subscription billing date and bill_count updates
-- ✅ Better handling of trial periods in next billing date calculation
-- 📌 **Note**: This ensures FluentCart's cron system can properly schedule subscription renewals
-- 📌 **Note**: bill_count is automatically calculated by querying OrderTransaction records
-- 📌 **Note**: Code reduced by ~35 lines total, duplicate code eliminated completely
-
-### Version 1.0.6
-- ✅ Added TransactionHelper utility class for idempotency protection
-- ✅ Added automatic retry mechanism for failed subscription renewals
-- ✅ Added WordPress Cron-based renewal retry scheduling
-- ✅ Added comprehensive error handling and logging for renewals
-- ✅ Improved subscription renewal process with FluentCart standard methods
-- ✅ Improved exception message security with esc_html() escaping
-- ✅ Improved timezone safety using gmdate() instead of date()
-- ✅ Fixed WordPress coding standards compliance
-- ✅ Fixed translator comments for all placeholder strings
-- ✅ Enhanced XSS protection for all output
-- ✅ Optimized transaction lookup and duplicate detection
-
-### Version 1.0.5
-- ✅ Added translator comments for all placeholder strings
-- ✅ Added comprehensive POT translation template
-- ✅ Improved subscription cancellation sync with order cancellation
-- ✅ Improved UTF-8 encoding handling for Chinese characters
-- ✅ Improved Face-to-Face payment amount formatting
-- ✅ Fixed order number display in payment subject
-- ✅ Fixed multiple placeholder string ordering for proper translation
-- ✅ Updated documentation with detailed configuration guide
-- ✅ Performance optimized webhook processing
-
-### Version 1.0.4
-- Added automatic subscription cancellation when parent order is cancelled
-- Added configurable subscription cancellation behavior
-- Improved recurring agreement handling
-- Improved error messages and logging
-- Fixed subscription status synchronization issues
-
-### Version 1.0.3  
-- Added Face-to-Face QR code payment support
-- Added enhanced mobile device detection
-- Fixed UTF-8 encoding issues with Chinese characters
-- Fixed subject line truncation for long product names
-- Improved payment page rendering performance
-
-### Version 1.0.2
-- Added automatic refund feature
-- Added refund activity logging
-- Improved webhook security validation
-- Fixed amount mismatch detection
-- Fixed timezone issues with Beijing time
-
-### Version 1.0.1
-- Added full subscription payment support
-- Added recurring agreement integration
-- Added trial period handling
-- Improved error handling and logging
-- Fixed cart session cleanup for repeat purchases
-
-### Version 1.0.0
-- Initial release
-- Multi-platform payment support (PC, Mobile, App)
-- Automatic client detection
-- Basic refund functionality
-- Multi-currency support
-- Test mode/Sandbox support
-- Webhook notification handling
-- i18n/l10n ready
 
 ## 💬 Support
 
