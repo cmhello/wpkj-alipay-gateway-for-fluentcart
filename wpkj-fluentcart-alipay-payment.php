@@ -3,7 +3,7 @@
  * Plugin Name: WPKJ FluentCart Alipay Payment
  * Plugin URI: https://www.wpdaxue.com/wpkj-fluentcart-alipay-payment
  * Description: Alipay payment gateway integration for FluentCart - Support PC Web, Mobile WAP, Face-to-Face, In-App payments, and Subscriptions
- * Version: 1.0.5
+ * Version: 1.0.6
  * Requires at least: 6.5
  * Requires PHP: 8.2
  * Author: WPKJ Team
@@ -16,7 +16,7 @@
 
 defined('ABSPATH') || exit;
 
-define('WPKJ_FC_ALIPAY_VERSION', '1.0.5');
+define('WPKJ_FC_ALIPAY_VERSION', '1.0.6');
 define('WPKJ_FC_ALIPAY_FILE', __FILE__);
 define('WPKJ_FC_ALIPAY_PATH', plugin_dir_path(__FILE__));
 define('WPKJ_FC_ALIPAY_URL', plugin_dir_url(__FILE__));
@@ -118,6 +118,9 @@ function wpkj_fc_alipay_bootstrap() {
         // Register order cancel listener (for subscription cancellation sync)
         $orderCancelListener = new \WPKJFluentCart\Alipay\Listeners\OrderCancelListener();
         $orderCancelListener->register();
+        
+        // Initialize subscription renewal retry mechanism
+        \WPKJFluentCart\Alipay\Subscription\SubscriptionRenewer::init();
         
     }, 9);
 }

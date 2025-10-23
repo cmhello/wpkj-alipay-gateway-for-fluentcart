@@ -5,7 +5,7 @@ Tags: fluentcart, alipay, payment gateway, china payment
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.2
-Stable tag: 1.0.5
+Stable tag: 1.0.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -175,6 +175,21 @@ Enable QR code payments in settings. Customers can scan QR codes with their Alip
 
 == Changelog ==
 
+= 1.0.6 =
+Release Date: October 23, 2025
+
+* Added: TransactionHelper utility class for idempotency protection
+* Added: Automatic retry mechanism for failed subscription renewals
+* Added: WordPress Cron-based renewal retry scheduling
+* Added: Comprehensive error handling and logging for renewals
+* Improved: Subscription renewal process with FluentCart standard methods
+* Improved: Exception message security with esc_html() escaping
+* Improved: Timezone safety using gmdate() instead of date()
+* Fixed: WordPress coding standards compliance
+* Fixed: Translator comments for all placeholder strings
+* Security: Enhanced XSS protection for all output
+* Performance: Optimized transaction lookup and duplicate detection
+
 = 1.0.5 =
 Release Date: October 22, 2025
 
@@ -237,6 +252,9 @@ Release Date: October 15, 2025
 * i18n/l10n ready
 
 == Upgrade Notice ==
+
+= 1.0.6 =
+Major subscription reliability improvements with automatic retry mechanism and enhanced security. Highly recommended for all users.
 
 = 1.0.5 =
 This version adds comprehensive translation support and improves subscription handling. Recommended upgrade for all users.

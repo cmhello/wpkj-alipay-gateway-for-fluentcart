@@ -15,6 +15,7 @@ use WPKJFluentCart\Alipay\Subscription\AlipaySubscriptionProcessor;
 use WPKJFluentCart\Alipay\Webhook\NotifyHandler;
 use WPKJFluentCart\Alipay\Utils\Helper;
 use WPKJFluentCart\Alipay\Utils\Logger;
+use WPKJFluentCart\Alipay\Utils\TransactionHelper;
 
 /**
  * Alipay Payment Gateway
@@ -522,16 +523,47 @@ class AlipayGateway extends AbstractPaymentGateway
             );
         }
 
+        // Use TransactionHelper for idempotency protection
         try {
+            return TransactionHelper::withIdempotencyLock(
+                'refund',
+                $transaction->uuid,
+                function() use ($transaction, $amount, $args) {
+                    return $this->executeRefund($transaction, $amount, $args);
+                }
+            );
+        } catch (\Exception $e) {
+            Logger::error('Refund Idempotency Lock Failed', $e->getMessage());
+            return new \WP_Error('alipay_refund_error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Execute refund operation
+     * 
+     * @param object $transaction Transaction object
+     * @param int $amount Refund amount in cents
+     * @param array $args Additional arguments
+     * @return array|\WP_Error Refund result
+     */
+    private function executeRefund($transaction, $amount, $args)
+    {
+        try {
+            // Validate transaction is refundable
+            $validation = TransactionHelper::validateRefundable($transaction);
+            if (is_wp_error($validation)) {
+                return $validation;
+            }
+
             $api = new \WPKJFluentCart\Alipay\API\AlipayAPI($this->settings);
 
-            // CRITICAL: Retrieve out_trade_no from transaction meta
-            // DO NOT regenerate because it contains creation timestamp
-            $outTradeNo = $transaction->meta['out_trade_no'] ?? null;
+            // Use TransactionHelper to get out_trade_no
+            $outTradeNo = TransactionHelper::getOutTradeNo($transaction);
             
             $refundAmount = Helper::toDecimal($amount);
-            // Use unique ID with random suffix to ensure idempotency
-            $outRequestNo = $transaction->uuid . '-manual-' . time() . '-' . substr(md5(uniqid()), 0, 8);
+            
+            // Use TransactionHelper to generate unique refund request number
+            $outRequestNo = TransactionHelper::generateRefundRequestNo($transaction);
 
             $refundParams = [
                 'refund_amount' => $refundAmount,
@@ -546,19 +578,11 @@ class AlipayGateway extends AbstractPaymentGateway
                     'transaction_uuid' => $transaction->uuid,
                     'trade_no' => $transaction->vendor_charge_id
                 ]);
-            } elseif (!empty($outTradeNo)) {
+            } else {
                 $refundParams['out_trade_no'] = $outTradeNo;
-                Logger::info('Manual Refund Using out_trade_no from Meta', [
+                Logger::info('Manual Refund Using out_trade_no', [
                     'transaction_uuid' => $transaction->uuid,
                     'out_trade_no' => $outTradeNo
-                ]);
-            } else {
-                // Fallback for old transactions: use old format
-                $outTradeNo = str_replace('-', '', $transaction->uuid);
-                $refundParams['out_trade_no'] = $outTradeNo;
-                Logger::warning('Manual Refund Using Fallback out_trade_no', [
-                    'transaction_uuid' => $transaction->uuid,
-                    'fallback_out_trade_no' => $outTradeNo
                 ]);
             }
             
