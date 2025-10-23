@@ -417,7 +417,7 @@ For support, bug reports, and feature requests:
 
 - **Website**: [https://www.wpdaxue.com](https://www.wpdaxue.com)
 - **Documentation**: [https://www.wpdaxue.com/wpkj-fluentcart-alipay-payment](https://www.wpdaxue.com/wpkj-fluentcart-alipay-payment)
-- **Email**: support@wpkj.com
+- **Email**: support@wpdaxue.com
 
 ## 📄 License
 
