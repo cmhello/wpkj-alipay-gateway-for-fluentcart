@@ -72,7 +72,7 @@ class AlipaySubscriptionProcessor
             if (!$subscription) {
                 return [
                     'status' => 'failed',
-                    'message' => __('No subscription found.', 'wpkj-fluentcart-alipay-payment')
+                    'message' => __('No subscription found.', 'wpkj-alipay-gateway-for-fluentcart')
                 ];
             }
 
@@ -230,20 +230,20 @@ class AlipaySubscriptionProcessor
         
         // Final fallback
         if (empty($productTitle)) {
-            $productTitle = __('Subscription', 'wpkj-fluentcart-alipay-payment');
+            $productTitle = __('Subscription', 'wpkj-alipay-gateway-for-fluentcart');
         }
         
         // Build subject with subscription type
         if ($order->type === 'renewal') {
             $subject = sprintf(
                 /* translators: %s: product title */
-                __('%s - Renewal', 'wpkj-fluentcart-alipay-payment'),
+                __('%s - Renewal', 'wpkj-alipay-gateway-for-fluentcart'),
                 $productTitle
             );
         } else {
             $subject = sprintf(
                 /* translators: %s: product title */
-                __('%s - Subscription', 'wpkj-fluentcart-alipay-payment'),
+                __('%s - Subscription', 'wpkj-alipay-gateway-for-fluentcart'),
                 $productTitle
             );
         }
@@ -274,7 +274,7 @@ class AlipaySubscriptionProcessor
         
         $body = sprintf(
             /* translators: 1: billing interval text (e.g., Monthly), 2: order ID */
-            __('Subscription payment - %1$s - Order #%2$s', 'wpkj-fluentcart-alipay-payment'),
+            __('Subscription payment - %1$s - Order #%2$s', 'wpkj-alipay-gateway-for-fluentcart'),
             $intervalText,
             $order->id
         );
@@ -301,10 +301,10 @@ class AlipaySubscriptionProcessor
     private function getIntervalText($interval)
     {
         $intervals = [
-            'day' => __('Daily', 'wpkj-fluentcart-alipay-payment'),
-            'week' => __('Weekly', 'wpkj-fluentcart-alipay-payment'),
-            'month' => __('Monthly', 'wpkj-fluentcart-alipay-payment'),
-            'year' => __('Yearly', 'wpkj-fluentcart-alipay-payment')
+            'day' => __('Daily', 'wpkj-alipay-gateway-for-fluentcart'),
+            'week' => __('Weekly', 'wpkj-alipay-gateway-for-fluentcart'),
+            'month' => __('Monthly', 'wpkj-alipay-gateway-for-fluentcart'),
+            'year' => __('Yearly', 'wpkj-alipay-gateway-for-fluentcart')
         ];
 
         return $intervals[$interval] ?? ucfirst($interval);
@@ -365,7 +365,7 @@ class AlipaySubscriptionProcessor
             'nextAction' => 'redirect',
             'actionName' => 'browser_redirect',
             'redirect_url' => $result['redirect_url'],
-            'message' => __('Redirecting to Alipay...', 'wpkj-fluentcart-alipay-payment')
+            'message' => __('Redirecting to Alipay...', 'wpkj-alipay-gateway-for-fluentcart')
         ];
     }
 
@@ -394,7 +394,7 @@ class AlipaySubscriptionProcessor
             'nextAction' => 'redirect',
             'actionName' => 'browser_redirect',
             'redirect_url' => $result['redirect_url'],
-            'message' => __('Redirecting to Alipay...', 'wpkj-fluentcart-alipay-payment')
+            'message' => __('Redirecting to Alipay...', 'wpkj-alipay-gateway-for-fluentcart')
         ];
     }
 
@@ -456,7 +456,7 @@ class AlipaySubscriptionProcessor
         // Return the same format as single payment
         return [
             'status' => 'success',
-            'message' => __('Redirecting to payment page...', 'wpkj-fluentcart-alipay-payment'),
+            'message' => __('Redirecting to payment page...', 'wpkj-alipay-gateway-for-fluentcart'),
             'redirect_to' => $qrPageUrl
         ];
     }
@@ -513,7 +513,7 @@ class AlipaySubscriptionProcessor
         return [
             'status' => 'success',
             'nextAction' => 'none',
-            'message' => __('Renewal payment completed automatically.', 'wpkj-fluentcart-alipay-payment'),
+            'message' => __('Renewal payment completed automatically.', 'wpkj-alipay-gateway-for-fluentcart'),
             'payment_args' => [
                 'auto_renewed' => true,
                 'trade_no' => $result['trade_no'] ?? ''
@@ -554,7 +554,7 @@ class AlipaySubscriptionProcessor
             'nextAction' => 'redirect',
             'actionName' => 'browser_redirect',
             'redirect_url' => $result['redirect_url'],
-            'message' => __('Redirecting to Alipay for recurring agreement...', 'wpkj-fluentcart-alipay-payment'),
+            'message' => __('Redirecting to Alipay for recurring agreement...', 'wpkj-alipay-gateway-for-fluentcart'),
             'payment_args' => [
                 'agreement_mode' => true,
                 'external_agreement_no' => $result['external_agreement_no']

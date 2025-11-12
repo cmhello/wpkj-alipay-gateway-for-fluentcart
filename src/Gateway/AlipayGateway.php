@@ -64,7 +64,7 @@ class AlipayGateway extends AbstractPaymentGateway
             'route' => 'alipay',
             'slug' => 'alipay',
             'label' => 'Alipay',
-            'description' => esc_html__('Pay securely with Alipay - Support PC, Mobile WAP, and In-App payments', 'wpkj-fluentcart-alipay-payment'),
+            'description' => esc_html__('Pay securely with Alipay - Support PC, Mobile WAP, and In-App payments', 'wpkj-alipay-gateway-for-fluentcart'),
             'logo' => WPKJ_FC_ALIPAY_URL . 'assets/images/alipay-logo.svg',
             'icon' => WPKJ_FC_ALIPAY_URL . 'assets/images/alipay-icon.svg',
             'brand_color' => '#1678FF',
@@ -164,7 +164,7 @@ class AlipayGateway extends AbstractPaymentGateway
 
         wp_send_json([
             'status' => 'success',
-            'message' => __('Ready to process payment', 'wpkj-fluentcart-alipay-payment'),
+            'message' => __('Ready to process payment', 'wpkj-alipay-gateway-for-fluentcart'),
             'data' => [
                 'gateway' => 'alipay',
                 'currency' => CurrencySettings::get('currency')
@@ -187,71 +187,71 @@ class AlipayGateway extends AbstractPaymentGateway
         return [
             'notice' => [
                 'value' => $this->renderStoreModeNotice(),
-                'label' => __('Alipay', 'wpkj-fluentcart-alipay-payment'),
+                'label' => __('Alipay', 'wpkj-alipay-gateway-for-fluentcart'),
                 'type' => 'notice'
             ],
             'gateway_description' => [
                 'type' => 'text',
-                'label' => __('Gateway Description', 'wpkj-fluentcart-alipay-payment'),
-                'placeholder' => __('Pay securely with Alipay - Support PC, Mobile WAP, and In-App payments', 'wpkj-fluentcart-alipay-payment'),
-                'help' => __('This description will be displayed on the checkout page when customers select Alipay. Leave empty to use default.', 'wpkj-fluentcart-alipay-payment')
+                'label' => __('Gateway Description', 'wpkj-alipay-gateway-for-fluentcart'),
+                'placeholder' => __('Pay securely with Alipay - Support PC, Mobile WAP, and In-App payments', 'wpkj-alipay-gateway-for-fluentcart'),
+                'help' => __('This description will be displayed on the checkout page when customers select Alipay. Leave empty to use default.', 'wpkj-alipay-gateway-for-fluentcart')
             ],
             'payment_mode' => [
                 'type' => 'tabs',
                 'schema' => [
                     [
                         'type' => 'tab',
-                        'label' => __('Live Credentials', 'wpkj-fluentcart-alipay-payment'),
+                        'label' => __('Live Credentials', 'wpkj-alipay-gateway-for-fluentcart'),
                         'value' => 'live',
                         'schema' => [
                             'live_app_id' => [
                                 'type' => 'text',
-                                'label' => __('App ID', 'wpkj-fluentcart-alipay-payment'),
+                                'label' => __('App ID', 'wpkj-alipay-gateway-for-fluentcart'),
                                 'placeholder' => '2021xxxxxxxxxxxx',
                                 'required' => true,
-                                'help' => __('Your Alipay application ID (16 digits)', 'wpkj-fluentcart-alipay-payment')
+                                'help' => __('Your Alipay application ID (16 digits)', 'wpkj-alipay-gateway-for-fluentcart')
                             ],
                             'live_private_key' => [
                                 'type' => 'password',
-                                'label' => __('Application Private Key', 'wpkj-fluentcart-alipay-payment'),
+                                'label' => __('Application Private Key', 'wpkj-alipay-gateway-for-fluentcart'),
                                 'placeholder' => 'MIIEvQIBADANBgkqhkiG9w0B...',
                                 'required' => true,
-                                'help' => __('Your application RSA2 private key (paste without header/footer)', 'wpkj-fluentcart-alipay-payment')
+                                'help' => __('Your application RSA2 private key (paste without header/footer)', 'wpkj-alipay-gateway-for-fluentcart')
                             ],
                             'live_alipay_public_key' => [
                                 'type' => 'password',
-                                'label' => __('Alipay Public Key', 'wpkj-fluentcart-alipay-payment'),
+                                'label' => __('Alipay Public Key', 'wpkj-alipay-gateway-for-fluentcart'),
                                 'placeholder' => 'MIIBIjANBgkqhkiG9w0B...',
                                 'required' => true,
-                                'help' => __('Alipay RSA2 public key (paste without header/footer)', 'wpkj-fluentcart-alipay-payment')
+                                'help' => __('Alipay RSA2 public key (paste without header/footer)', 'wpkj-alipay-gateway-for-fluentcart')
                             ]
                         ]
                     ],
                     [
                         'type' => 'tab',
-                        'label' => __('Test Credentials', 'wpkj-fluentcart-alipay-payment'),
+                        'label' => __('Test Credentials', 'wpkj-alipay-gateway-for-fluentcart'),
                         'value' => 'test',
                         'schema' => [
                             'test_app_id' => [
                                 'type' => 'text',
-                                'label' => __('App ID', 'wpkj-fluentcart-alipay-payment'),
+                                'label' => __('App ID', 'wpkj-alipay-gateway-for-fluentcart'),
                                 'placeholder' => '9021xxxxxxxxxxxx',
                                 'required' => true,
-                                'help' => __('Your Alipay sandbox application ID (16 digits)', 'wpkj-fluentcart-alipay-payment')
+                                'help' => __('Your Alipay sandbox application ID (16 digits)', 'wpkj-alipay-gateway-for-fluentcart')
                             ],
                             'test_private_key' => [
                                 'type' => 'password',
-                                'label' => __('Application Private Key', 'wpkj-fluentcart-alipay-payment'),
+                                'label' => __('Application Private Key', 'wpkj-alipay-gateway-for-fluentcart'),
                                 'placeholder' => 'MIIEvQIBADANBgkqhkiG9w0B...',
                                 'required' => true,
-                                'help' => __('Your application RSA2 private key for sandbox (paste without header/footer)', 'wpkj-fluentcart-alipay-payment')
+                                'help' => __('Your application RSA2 private key for sandbox (paste without header/footer)', 'wpkj-alipay-gateway-for-fluentcart')
                             ],
                             'test_alipay_public_key' => [
                                 'type' => 'password',
-                                'label' => __('Alipay Public Key', 'wpkj-fluentcart-alipay-payment'),
+                                'label' => __('Alipay Public Key', 'wpkj-alipay-gateway-for-fluentcart'),
                                 'placeholder' => 'MIIBIjANBgkqhkiG9w0B...',
                                 'required' => true,
-                                'help' => __('Alipay RSA2 public key for sandbox (paste without header/footer)', 'wpkj-fluentcart-alipay-payment')
+                                'help' => __('Alipay RSA2 public key for sandbox (paste without header/footer)', 'wpkj-alipay-gateway-for-fluentcart')
                             ]
                         ]
                     ]
@@ -259,36 +259,36 @@ class AlipayGateway extends AbstractPaymentGateway
             ],
             'notify_url_info' => [
                 'type' => 'html_attr',
-                'label' => __('Notify URL (Webhook)', 'wpkj-fluentcart-alipay-payment'),
+                'label' => __('Notify URL (Webhook)', 'wpkj-alipay-gateway-for-fluentcart'),
                 'value' => sprintf(
                     '<div class="mt-3"><p class="mb-2">%s</p><code class="copyable-content">%s</code><p class="mt-2 text-sm text-gray-600">%s</p></div>',
-                    esc_html__('Configure this URL in your Alipay application settings:', 'wpkj-fluentcart-alipay-payment'),
+                    esc_html__('Configure this URL in your Alipay application settings:', 'wpkj-alipay-gateway-for-fluentcart'),
                     esc_html($notifyUrl),
-                    esc_html__('This URL will receive payment notifications from Alipay.', 'wpkj-fluentcart-alipay-payment')
+                    esc_html__('This URL will receive payment notifications from Alipay.', 'wpkj-alipay-gateway-for-fluentcart')
                 )
             ],
             'auto_refund_on_cancel' => [
                 'type' => 'checkbox',
-                'label' => __('Enable automatic refund when order is cancelled', 'wpkj-fluentcart-alipay-payment')
+                'label' => __('Enable automatic refund when order is cancelled', 'wpkj-alipay-gateway-for-fluentcart')
             ],
             'enable_face_to_face_pc' => [
                 'type' => 'checkbox',
-                'label' => __('Enable Face-to-Face QR code payment for PC/Desktop (Scan with Alipay app)', 'wpkj-fluentcart-alipay-payment')
+                'label' => __('Enable Face-to-Face QR code payment for PC/Desktop (Scan with Alipay app)', 'wpkj-alipay-gateway-for-fluentcart')
             ],
             'subscription_settings_header' => [
                 'type' => 'html_attr',
-                'label' => __('Subscription Settings', 'wpkj-fluentcart-alipay-payment'),
-                'value' => '<hr class="my-4"><h3 class="text-lg font-semibold mb-2">' . esc_html__('Subscription & Recurring Payment', 'wpkj-fluentcart-alipay-payment') . '</h3>'
+                'label' => __('Subscription Settings', 'wpkj-alipay-gateway-for-fluentcart'),
+                'value' => '<hr class="my-4"><h3 class="text-lg font-semibold mb-2">' . esc_html__('Subscription & Recurring Payment', 'wpkj-alipay-gateway-for-fluentcart') . '</h3>'
             ],
             'enable_recurring_agreement' => [
                 'type' => 'checkbox',
-                'label' => __('Enable automatic recurring payment (⚠️ Requires Alipay Recurring Payment service)', 'wpkj-fluentcart-alipay-payment')
+                'label' => __('Enable automatic recurring payment (⚠️ Requires Alipay Recurring Payment service)', 'wpkj-alipay-gateway-for-fluentcart')
             ],
             'recurring_personal_product_code' => [
                 'type' => 'text',
-                'label' => __('Personal Product Code', 'wpkj-fluentcart-alipay-payment'),
+                'label' => __('Personal Product Code', 'wpkj-alipay-gateway-for-fluentcart'),
                 'placeholder' => 'GENERAL_WITHHOLDING_P',
-                'help' => __('Product code provided by Alipay after signing recurring payment contract. Common values: GENERAL_WITHHOLDING_P (general withholding). Leave empty if not using recurring agreement.', 'wpkj-fluentcart-alipay-payment'),
+                'help' => __('Product code provided by Alipay after signing recurring payment contract. Common values: GENERAL_WITHHOLDING_P (general withholding). Leave empty if not using recurring agreement.', 'wpkj-alipay-gateway-for-fluentcart'),
                 'dependency' => [
                     'depends_on' => 'enable_recurring_agreement',
                     'value' => 'yes'
@@ -296,7 +296,7 @@ class AlipayGateway extends AbstractPaymentGateway
             ],
             'recurring_info' => [
                 'type' => 'html_attr',
-                'label' => __('How It Works', 'wpkj-fluentcart-alipay-payment'),
+                'label' => __('How It Works', 'wpkj-alipay-gateway-for-fluentcart'),
                 'value' => sprintf(
                     '<div class="mt-2 p-4 bg-blue-50 border border-blue-200 rounded">'
                     . '<p class="text-sm mb-2"><strong>%s</strong></p>'
@@ -308,12 +308,12 @@ class AlipayGateway extends AbstractPaymentGateway
                     . '</ul>'
                     . '<p class="text-sm mt-3 text-gray-600">%s</p>'
                     . '</div>',
-                    esc_html__('Alipay Recurring Agreement Process:', 'wpkj-fluentcart-alipay-payment'),
-                    esc_html__('Initial purchase: Customer signs recurring agreement + first payment', 'wpkj-fluentcart-alipay-payment'),
-                    esc_html__('Auto renewal: System automatically deducts payment on billing date', 'wpkj-fluentcart-alipay-payment'),
-                    esc_html__('Cancellation: Customer can cancel agreement anytime from their Alipay app', 'wpkj-fluentcart-alipay-payment'),
-                    esc_html__('Fallback: If agreement deduction fails, customer receives manual payment notification', 'wpkj-fluentcart-alipay-payment'),
-                    esc_html__('Note: Without this feature, all renewals require manual payment by customer.', 'wpkj-fluentcart-alipay-payment')
+                    esc_html__('Alipay Recurring Agreement Process:', 'wpkj-alipay-gateway-for-fluentcart'),
+                    esc_html__('Initial purchase: Customer signs recurring agreement + first payment', 'wpkj-alipay-gateway-for-fluentcart'),
+                    esc_html__('Auto renewal: System automatically deducts payment on billing date', 'wpkj-alipay-gateway-for-fluentcart'),
+                    esc_html__('Cancellation: Customer can cancel agreement anytime from their Alipay app', 'wpkj-alipay-gateway-for-fluentcart'),
+                    esc_html__('Fallback: If agreement deduction fails, customer receives manual payment notification', 'wpkj-alipay-gateway-for-fluentcart'),
+                    esc_html__('Note: Without this feature, all renewals require manual payment by customer.', 'wpkj-alipay-gateway-for-fluentcart')
                 ),
                 'dependency' => [
                     'depends_on' => 'enable_recurring_agreement',
@@ -322,12 +322,12 @@ class AlipayGateway extends AbstractPaymentGateway
             ],
             'auto_cancel_subscription_on_order_cancel' => [
                 'type' => 'checkbox',
-                'label' => __('Automatically cancel subscription when parent order is canceled (Initial order only)', 'wpkj-fluentcart-alipay-payment'),
-                'help' => __('When enabled, canceling the initial subscription order will automatically cancel the associated subscription. This does NOT affect renewal orders - canceling a renewal order will never cancel the subscription.', 'wpkj-fluentcart-alipay-payment')
+                'label' => __('Automatically cancel subscription when parent order is canceled (Initial order only)', 'wpkj-alipay-gateway-for-fluentcart'),
+                'help' => __('When enabled, canceling the initial subscription order will automatically cancel the associated subscription. This does NOT affect renewal orders - canceling a renewal order will never cancel the subscription.', 'wpkj-alipay-gateway-for-fluentcart')
             ],
             'subscription_cancel_info' => [
                 'type' => 'html_attr',
-                'label' => __('Order Cancellation Rules', 'wpkj-fluentcart-alipay-payment'),
+                'label' => __('Order Cancellation Rules', 'wpkj-alipay-gateway-for-fluentcart'),
                 'value' => sprintf(
                     '<div class="mt-2 p-4 bg-amber-50 border border-amber-200 rounded">'
                     . '<p class="text-sm mb-2"><strong>%s</strong></p>'
@@ -340,15 +340,15 @@ class AlipayGateway extends AbstractPaymentGateway
                     . '<p class="text-sm mt-3 text-blue-600"><strong>%s</strong> %s</p>'
                     . '<p class="text-sm mt-2 text-gray-600"><strong>%s</strong> %s</p>'
                     . '</div>',
-                    esc_html__('Automatic Subscription Cancellation Rules:', 'wpkj-fluentcart-alipay-payment'),
-                    esc_html__('✅ WILL cancel: Initial subscription order (type=subscription) is canceled', 'wpkj-fluentcart-alipay-payment'),
-                    esc_html__('❌ Will NOT cancel: Renewal order (type=renewal) is canceled', 'wpkj-fluentcart-alipay-payment'),
-                    esc_html__('❌ Will NOT cancel: Subscription already in canceled status', 'wpkj-fluentcart-alipay-payment'),
-                    esc_html__('❌ Will NOT cancel: Orders from other payment methods', 'wpkj-fluentcart-alipay-payment'),
-                    esc_html__('Note:', 'wpkj-fluentcart-alipay-payment'),
-                    esc_html__('This feature helps maintain data consistency between orders and subscriptions. All operations are logged in the order activity log.', 'wpkj-fluentcart-alipay-payment'),
-                    esc_html__('Default:', 'wpkj-fluentcart-alipay-payment'),
-                    esc_html__('This feature is DISABLED by default. Enable it only if you need automatic synchronization between order and subscription status.', 'wpkj-fluentcart-alipay-payment')
+                    esc_html__('Automatic Subscription Cancellation Rules:', 'wpkj-alipay-gateway-for-fluentcart'),
+                    esc_html__('✅ WILL cancel: Initial subscription order (type=subscription) is canceled', 'wpkj-alipay-gateway-for-fluentcart'),
+                    esc_html__('❌ Will NOT cancel: Renewal order (type=renewal) is canceled', 'wpkj-alipay-gateway-for-fluentcart'),
+                    esc_html__('❌ Will NOT cancel: Subscription already in canceled status', 'wpkj-alipay-gateway-for-fluentcart'),
+                    esc_html__('❌ Will NOT cancel: Orders from other payment methods', 'wpkj-alipay-gateway-for-fluentcart'),
+                    esc_html__('Note:', 'wpkj-alipay-gateway-for-fluentcart'),
+                    esc_html__('This feature helps maintain data consistency between orders and subscriptions. All operations are logged in the order activity log.', 'wpkj-alipay-gateway-for-fluentcart'),
+                    esc_html__('Default:', 'wpkj-alipay-gateway-for-fluentcart'),
+                    esc_html__('This feature is DISABLED by default. Enable it only if you need automatic synchronization between order and subscription status.', 'wpkj-alipay-gateway-for-fluentcart')
                 )
             ]
         ];
@@ -372,7 +372,7 @@ class AlipayGateway extends AbstractPaymentGateway
         if (empty($appId)) {
             return [
                 'status' => 'failed',
-                'message' => __('App ID is required!', 'wpkj-fluentcart-alipay-payment')
+                'message' => __('App ID is required!', 'wpkj-alipay-gateway-for-fluentcart')
             ];
         }
 
@@ -380,7 +380,7 @@ class AlipayGateway extends AbstractPaymentGateway
         if (!preg_match('/^\d{16}$/', $appId)) {
             return [
                 'status' => 'failed',
-                'message' => __('Invalid App ID format. It should be 16 digits.', 'wpkj-fluentcart-alipay-payment')
+                'message' => __('Invalid App ID format. It should be 16 digits.', 'wpkj-alipay-gateway-for-fluentcart')
             ];
         }
 
@@ -398,7 +398,7 @@ class AlipayGateway extends AbstractPaymentGateway
                 if (!preg_match('/^MII[A-Za-z0-9+\/=]+$/', $cleanPrivateKey)) {
                     return [
                         'status' => 'failed',
-                        'message' => __('Invalid Private Key format. Please paste the RSA2 key content without header/footer.', 'wpkj-fluentcart-alipay-payment')
+                        'message' => __('Invalid Private Key format. Please paste the RSA2 key content without header/footer.', 'wpkj-alipay-gateway-for-fluentcart')
                     ];
                 }
 
@@ -406,7 +406,7 @@ class AlipayGateway extends AbstractPaymentGateway
                 if (strlen($cleanPrivateKey) < 1500) {
                     return [
                         'status' => 'failed',
-                        'message' => __('Private Key appears to be too short. Please ensure you are using RSA2 (2048-bit) key.', 'wpkj-fluentcart-alipay-payment')
+                        'message' => __('Private Key appears to be too short. Please ensure you are using RSA2 (2048-bit) key.', 'wpkj-alipay-gateway-for-fluentcart')
                     ];
                 }
             }
@@ -423,7 +423,7 @@ class AlipayGateway extends AbstractPaymentGateway
                 if (!preg_match('/^MII[A-Za-z0-9+\/=]+$/', $cleanPublicKey)) {
                     return [
                         'status' => 'failed',
-                        'message' => __('Invalid Alipay Public Key format. Please paste the RSA2 public key content without header/footer.', 'wpkj-fluentcart-alipay-payment')
+                        'message' => __('Invalid Alipay Public Key format. Please paste the RSA2 public key content without header/footer.', 'wpkj-alipay-gateway-for-fluentcart')
                     ];
                 }
             }
@@ -431,7 +431,7 @@ class AlipayGateway extends AbstractPaymentGateway
 
         return [
             'status' => 'success',
-            'message' => __('Credentials validated successfully!', 'wpkj-fluentcart-alipay-payment')
+            'message' => __('Credentials validated successfully!', 'wpkj-alipay-gateway-for-fluentcart')
         ];
     }
 
@@ -477,7 +477,7 @@ class AlipayGateway extends AbstractPaymentGateway
                         'original_key_length' => strlen($data["{$mode}_private_key"])
                     ]);
                     throw new \Exception(
-                        esc_html__('Failed to encrypt private key. Please try again.', 'wpkj-fluentcart-alipay-payment')
+                        esc_html__('Failed to encrypt private key. Please try again.', 'wpkj-alipay-gateway-for-fluentcart')
                     );
                 }
                 
@@ -531,7 +531,7 @@ class AlipayGateway extends AbstractPaymentGateway
         if (!$amount || $amount <= 0) {
             return new \WP_Error(
                 'invalid_refund_amount',
-                __('Refund amount is required and must be greater than zero.', 'wpkj-fluentcart-alipay-payment')
+                __('Refund amount is required and must be greater than zero.', 'wpkj-alipay-gateway-for-fluentcart')
             );
         }
 
@@ -554,7 +554,7 @@ class AlipayGateway extends AbstractPaymentGateway
                 
                 return new \WP_Error(
                     'missing_transaction_id',
-                    __('Cannot process refund: missing both trade_no and out_trade_no', 'wpkj-fluentcart-alipay-payment')
+                    __('Cannot process refund: missing both trade_no and out_trade_no', 'wpkj-alipay-gateway-for-fluentcart')
                 );
             }
             
@@ -601,7 +601,7 @@ class AlipayGateway extends AbstractPaymentGateway
                 
                 return new \WP_Error(
                     'invalid_response',
-                    __('Invalid response from Alipay', 'wpkj-fluentcart-alipay-payment')
+                    __('Invalid response from Alipay', 'wpkj-alipay-gateway-for-fluentcart')
                 );
             }
             
@@ -621,7 +621,7 @@ class AlipayGateway extends AbstractPaymentGateway
                     'refund_failed',
                     sprintf(
                         /* translators: %s: Alipay error message */
-                        __('Alipay refund failed: %s', 'wpkj-fluentcart-alipay-payment'),
+                        __('Alipay refund failed: %s', 'wpkj-alipay-gateway-for-fluentcart'),
                         $errorMsg
                     )
                 );
@@ -657,7 +657,7 @@ class AlipayGateway extends AbstractPaymentGateway
                 'refund_exception',
                 sprintf(
                     /* translators: %s: exception message */
-                    __('Refund processing error: %s', 'wpkj-fluentcart-alipay-payment'),
+                    __('Refund processing error: %s', 'wpkj-alipay-gateway-for-fluentcart'),
                     $e->getMessage()
                 )
             );
@@ -705,7 +705,7 @@ class AlipayGateway extends AbstractPaymentGateway
         if (!$this->isCurrencySupported()) {
             wp_send_json([
                 'status' => 'failed',
-                'message' => __('Alipay does not support the currency you are using!', 'wpkj-fluentcart-alipay-payment')
+                'message' => __('Alipay does not support the currency you are using!', 'wpkj-alipay-gateway-for-fluentcart')
             ], 422);
         }
     }
@@ -747,7 +747,7 @@ class AlipayGateway extends AbstractPaymentGateway
         $customDescription = $this->settings->get('gateway_description');
         $description = !empty($customDescription) 
             ? $customDescription 
-            : __('Pay securely with Alipay - Support PC, Mobile WAP, and In-App payments', 'wpkj-fluentcart-alipay-payment');
+            : __('Pay securely with Alipay - Support PC, Mobile WAP, and In-App payments', 'wpkj-alipay-gateway-for-fluentcart');
         
         return [
             'wpkj_fc_alipay_data' => [

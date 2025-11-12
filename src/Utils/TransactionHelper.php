@@ -131,7 +131,7 @@ class TransactionHelper
             throw new \Exception(
                 sprintf(
                     /* translators: %s: operation name */
-                    esc_html__('Operation "%s" is already in progress. Please wait.', 'wpkj-fluentcart-alipay-payment'),
+                    esc_html__('Operation "%s" is already in progress. Please wait.', 'wpkj-alipay-gateway-for-fluentcart'),
                     esc_html($operation)
                 )
             );
@@ -242,7 +242,7 @@ class TransactionHelper
         if (!$transaction->vendor_charge_id && !self::getOutTradeNo($transaction)) {
             return new \WP_Error(
                 'invalid_transaction',
-                __('Transaction does not have valid payment reference.', 'wpkj-fluentcart-alipay-payment')
+                __('Transaction does not have valid payment reference.', 'wpkj-alipay-gateway-for-fluentcart')
             );
         }
 
@@ -250,7 +250,7 @@ class TransactionHelper
         if (!self::isCompleted($transaction)) {
             return new \WP_Error(
                 'transaction_not_completed',
-                __('Transaction is not in completed state.', 'wpkj-fluentcart-alipay-payment')
+                __('Transaction is not in completed state.', 'wpkj-alipay-gateway-for-fluentcart')
             );
         }
 
@@ -258,7 +258,7 @@ class TransactionHelper
         if ($transaction->status === 'refunded') {
             return new \WP_Error(
                 'already_refunded',
-                __('Transaction has already been fully refunded.', 'wpkj-fluentcart-alipay-payment')
+                __('Transaction has already been fully refunded.', 'wpkj-alipay-gateway-for-fluentcart')
             );
         }
 
@@ -267,7 +267,7 @@ class TransactionHelper
         if ($refundableAmount <= 0) {
             return new \WP_Error(
                 'no_refundable_amount',
-                __('No refundable amount remaining.', 'wpkj-fluentcart-alipay-payment')
+                __('No refundable amount remaining.', 'wpkj-alipay-gateway-for-fluentcart')
             );
         }
 

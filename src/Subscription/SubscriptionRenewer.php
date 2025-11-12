@@ -42,7 +42,7 @@ class SubscriptionRenewer
         if ($subscription->current_payment_method !== 'alipay') {
             return new \WP_Error(
                 'invalid_payment_method',
-                __('Subscription is not using Alipay payment method.', 'wpkj-fluentcart-alipay-payment')
+                __('Subscription is not using Alipay payment method.', 'wpkj-alipay-gateway-for-fluentcart')
             );
         }
 

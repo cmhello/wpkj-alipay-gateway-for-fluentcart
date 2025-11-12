@@ -90,7 +90,7 @@ class AlipayRecurringAgreement
         if (!$this->isRecurringEnabled()) {
             return new \WP_Error(
                 'recurring_not_enabled',
-                __('Recurring agreement feature is not enabled.', 'wpkj-fluentcart-alipay-payment')
+                __('Recurring agreement feature is not enabled.', 'wpkj-alipay-gateway-for-fluentcart')
             );
         }
 
@@ -253,7 +253,7 @@ class AlipayRecurringAgreement
             if (empty($agreementNo)) {
                 return new \WP_Error(
                     'no_agreement',
-                    __('No recurring agreement found for this subscription.', 'wpkj-fluentcart-alipay-payment')
+                    __('No recurring agreement found for this subscription.', 'wpkj-alipay-gateway-for-fluentcart')
                 );
             }
 
@@ -267,7 +267,7 @@ class AlipayRecurringAgreement
 
                 return new \WP_Error(
                     'agreement_not_active',
-                    __('Recurring agreement is not active.', 'wpkj-fluentcart-alipay-payment')
+                    __('Recurring agreement is not active.', 'wpkj-alipay-gateway-for-fluentcart')
                 );
             }
 
@@ -368,7 +368,7 @@ class AlipayRecurringAgreement
                     'trade_no' => $tradeNo,
                     'out_trade_no' => $outTradeNo,
                     'transaction_id' => $createdTransaction->id,
-                    'message' => __('Renewal payment successful.', 'wpkj-fluentcart-alipay-payment')
+                    'message' => __('Renewal payment successful.', 'wpkj-alipay-gateway-for-fluentcart')
                 ];
             } else {
                 // 扣款失败
@@ -463,7 +463,7 @@ class AlipayRecurringAgreement
             if (empty($agreementNo)) {
                 return new \WP_Error(
                     'no_agreement',
-                    __('No agreement found.', 'wpkj-fluentcart-alipay-payment')
+                    __('No agreement found.', 'wpkj-alipay-gateway-for-fluentcart')
                 );
             }
 
@@ -579,15 +579,15 @@ class AlipayRecurringAgreement
         $items = $order->items ?? [];
 
         if (!empty($items[0])) {
-            $productTitle = $items[0]['title'] ?? __('Subscription', 'wpkj-fluentcart-alipay-payment');
+            $productTitle = $items[0]['title'] ?? __('Subscription', 'wpkj-alipay-gateway-for-fluentcart');
             return sprintf(
                 /* translators: %s: product title */
-                __('%s - Auto Renewal', 'wpkj-fluentcart-alipay-payment'),
+                __('%s - Auto Renewal', 'wpkj-alipay-gateway-for-fluentcart'),
                 $productTitle
             );
         }
 
-        return __('Subscription Auto Renewal', 'wpkj-fluentcart-alipay-payment');
+        return __('Subscription Auto Renewal', 'wpkj-alipay-gateway-for-fluentcart');
     }
 
     /**

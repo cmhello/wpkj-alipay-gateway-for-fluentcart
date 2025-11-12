@@ -67,8 +67,21 @@ class NotifyHandler
      */
     public function processNotify()
     {
-        // Get POST data
-        $data = $_POST; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Alipay webhook verification handled by signature verification
+        // Get necessary POST data only (don't process entire $_POST)
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Alipay webhook verification handled by signature verification
+        $requiredFields = [
+            'notify_id', 'notify_type', 'out_trade_no', 'trade_no', 'trade_status',
+            'total_amount', 'buyer_logon_id', 'buyer_user_id', 'send_pay_date',
+            'sign', 'sign_type', 'gmt_create', 'gmt_payment'
+        ];
+        
+        $data = [];
+        foreach ($requiredFields as $field) {
+            if (isset($_POST[$field])) {
+                // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Will be sanitized below
+                $data[$field] = wp_unslash($_POST[$field]);
+            }
+        }
 
         if (empty($data)) {
             Logger::error('Notify Processing', 'Empty notification data');

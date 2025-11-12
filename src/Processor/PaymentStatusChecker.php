@@ -64,9 +64,9 @@ class PaymentStatusChecker
         try {
             // Verify nonce for CSRF protection
             // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Nonce verification handles security
-            if (!isset($_POST['nonce']) || !wp_verify_nonce(wp_unslash($_POST['nonce']), 'wpkj_alipay_check_status')) {
+            if (!isset($_POST['wpkj_alipay_f2f_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['wpkj_alipay_f2f_nonce'])), 'wpkj_alipay_f2f_check_payment_status_nonce')) {
                 wp_send_json_error([
-                    'message' => __('Security verification failed', 'wpkj-fluentcart-alipay-payment')
+                    'message' => __('Security verification failed', 'wpkj-alipay-gateway-for-fluentcart')
                 ], 403);
                 return;
             }
@@ -76,7 +76,7 @@ class PaymentStatusChecker
 
             if (empty($transactionUuid)) {
                 wp_send_json_error([
-                    'message' => __('Invalid transaction ID', 'wpkj-fluentcart-alipay-payment')
+                    'message' => __('Invalid transaction ID', 'wpkj-alipay-gateway-for-fluentcart')
                 ]);
                 return;
             }
@@ -87,7 +87,7 @@ class PaymentStatusChecker
 
             if (!$transaction) {
                 wp_send_json_error([
-                    'message' => __('Transaction not found', 'wpkj-fluentcart-alipay-payment')
+                    'message' => __('Transaction not found', 'wpkj-alipay-gateway-for-fluentcart')
                 ]);
                 return;
             }
@@ -106,7 +106,7 @@ class PaymentStatusChecker
                 
                 wp_send_json_success([
                     'status' => 'paid',
-                    'message' => __('Payment completed successfully', 'wpkj-fluentcart-alipay-payment'),
+                    'message' => __('Payment completed successfully', 'wpkj-alipay-gateway-for-fluentcart'),
                     'redirect_url' => $receiptUrl
                 ]);
                 return;
@@ -133,7 +133,7 @@ class PaymentStatusChecker
             if (is_wp_error($result)) {
                 wp_send_json_success([
                     'status' => 'waiting',
-                    'message' => __('Waiting for payment', 'wpkj-fluentcart-alipay-payment')
+                    'message' => __('Waiting for payment', 'wpkj-alipay-gateway-for-fluentcart')
                 ]);
                 return;
             }
@@ -149,7 +149,7 @@ class PaymentStatusChecker
                         // Confirmation failed (amount mismatch, etc.), continue waiting
                         wp_send_json_success([
                             'status' => 'waiting',
-                            'message' => __('Payment verification in progress...', 'wpkj-fluentcart-alipay-payment')
+                            'message' => __('Payment verification in progress...', 'wpkj-alipay-gateway-for-fluentcart')
                         ]);
                         return;
                     }
@@ -174,14 +174,14 @@ class PaymentStatusChecker
                     
                     wp_send_json_success([
                         'status' => 'paid',
-                        'message' => __('Payment completed successfully', 'wpkj-fluentcart-alipay-payment'),
+                        'message' => __('Payment completed successfully', 'wpkj-alipay-gateway-for-fluentcart'),
                         'redirect_url' => $receiptUrl
                     ]);
                     return;
                 } elseif ($tradeStatus === 'TRADE_CLOSED') {
                     wp_send_json_success([
                         'status' => 'failed',
-                        'message' => __('Payment cancelled or closed', 'wpkj-fluentcart-alipay-payment')
+                        'message' => __('Payment cancelled or closed', 'wpkj-alipay-gateway-for-fluentcart')
                     ]);
                     return;
                 }
@@ -189,7 +189,7 @@ class PaymentStatusChecker
 
             wp_send_json_success([
                 'status' => 'waiting',
-                'message' => __('Waiting for payment', 'wpkj-fluentcart-alipay-payment')
+                'message' => __('Waiting for payment', 'wpkj-alipay-gateway-for-fluentcart')
             ]);
 
         } catch (\Exception $e) {
@@ -199,7 +199,7 @@ class PaymentStatusChecker
             ]);
 
             wp_send_json_error([
-                'message' => __('Failed to check payment status', 'wpkj-fluentcart-alipay-payment')
+                'message' => __('Failed to check payment status', 'wpkj-alipay-gateway-for-fluentcart')
             ]);
         }
     }
@@ -274,10 +274,10 @@ class PaymentStatusChecker
 
         // Add log to order activity
         fluent_cart_add_log(
-            __('Alipay Face-to-Face Payment Confirmed', 'wpkj-fluentcart-alipay-payment'),
+            __('Alipay Face-to-Face Payment Confirmed', 'wpkj-alipay-gateway-for-fluentcart'),
             sprintf(
                 /* translators: %s: Alipay transaction ID */
-                __('Payment confirmed via status polling. Trade No: %s', 'wpkj-fluentcart-alipay-payment'),
+                __('Payment confirmed via status polling. Trade No: %s', 'wpkj-alipay-gateway-for-fluentcart'),
                 $tradeData['trade_no'] ?? 'N/A'
             ),
             'info',

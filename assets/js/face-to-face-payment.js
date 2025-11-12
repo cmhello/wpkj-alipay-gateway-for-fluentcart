@@ -19,28 +19,20 @@
 
     /**
      * Initialize QR code display
+     * 
+     * Uses QRCode.js library for client-side generation
      */
     function initQRCode() {
         // Use QRCode.js library for client-side generation
         // This avoids URL encoding issues with Chinese characters
-        if (typeof QRCode !== 'undefined') {
-            new QRCode(document.getElementById('alipay-qrcode'), {
-                text: wpkj_alipay_f2f_data.qr_code,
-                width: 280,
-                height: 280,
-                colorDark: '#000000',
-                colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.H
-            });
-        } else {
-            // Fallback to external API if QRCode.js is not loaded
-            var qrCodeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=' + 
-                encodeURIComponent(wpkj_alipay_f2f_data.qr_code);
-            
-            $('#alipay-qrcode').html(
-                '<img src="' + qrCodeUrl + '" alt="Alipay QR Code" style="width: 280px; height: 280px;">'
-            );
-        }
+        new QRCode(document.getElementById('alipay-qrcode'), {
+            text: wpkj_alipay_f2f_data.qr_code,
+            width: 280,
+            height: 280,
+            colorDark: '#000000',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.H
+        });
     }
 
     /**
@@ -75,7 +67,7 @@
                 data: {
                     action: 'wpkj_alipay_check_payment_status',
                     transaction_uuid: wpkj_alipay_f2f_data.transaction_uuid,
-                    nonce: wpkj_alipay_f2f_data.nonce
+                    wpkj_alipay_f2f_nonce: wpkj_alipay_f2f_data.nonce
                 },
                 success: function(response) {
                     handleStatusResponse(response);

@@ -54,7 +54,7 @@ class CustomPaymentService
 
             return [
                 'status' => 'success',
-                'message' => __('Payment order created successfully', 'wpkj-fluentcart-alipay-payment'),
+                'message' => __('Payment order created successfully', 'wpkj-alipay-gateway-for-fluentcart'),
                 'data' => [
                     'order_id' => $order['id'],
                     'order_hash' => $order['uuid'],
@@ -85,7 +85,7 @@ class CustomPaymentService
         $customerEmail = $paymentIntent->getCustomerEmail();
         if (empty($customerEmail) || !is_email($customerEmail)) {
             throw new \InvalidArgumentException(
-                __('Invalid customer email address', 'wpkj-fluentcart-alipay-payment') // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception message is translated and safe
+                __('Invalid customer email address', 'wpkj-alipay-gateway-for-fluentcart') // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception message is translated and safe
             );
         }
 
@@ -93,7 +93,7 @@ class CustomPaymentService
         $lineItems = $paymentIntent->getLineItems();
         if (empty($lineItems)) {
             throw new \InvalidArgumentException(
-                __('Payment intent must contain at least one line item', 'wpkj-fluentcart-alipay-payment') // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception message is translated and safe
+                __('Payment intent must contain at least one line item', 'wpkj-alipay-gateway-for-fluentcart') // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception message is translated and safe
             );
         }
 
@@ -101,7 +101,7 @@ class CustomPaymentService
         foreach ($lineItems as $item) {
             if (!($item instanceof PaymentItem)) {
                 throw new \InvalidArgumentException(
-                    __('All line items must be PaymentItem instances', 'wpkj-fluentcart-alipay-payment') // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception message is translated and safe
+                    __('All line items must be PaymentItem instances', 'wpkj-alipay-gateway-for-fluentcart') // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception message is translated and safe
                 );
             }
         }
@@ -173,7 +173,7 @@ class CustomPaymentService
 
         if (!$order) {
             throw new \Exception(
-                __('Failed to create FluentCart order. Please ensure the order creation hook is properly implemented.', 'wpkj-fluentcart-alipay-payment') // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception message is translated and safe
+                __('Failed to create FluentCart order. Please ensure the order creation hook is properly implemented.', 'wpkj-alipay-gateway-for-fluentcart') // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception message is translated and safe
             );
         }
 
@@ -194,7 +194,7 @@ class CustomPaymentService
                 ->first();
 
             if (!$order) {
-                throw new \Exception(__('Order not found', 'wpkj-fluentcart-alipay-payment')); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception message is translated and safe
+                throw new \Exception(__('Order not found', 'wpkj-alipay-gateway-for-fluentcart')); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception message is translated and safe
             }
 
             return [

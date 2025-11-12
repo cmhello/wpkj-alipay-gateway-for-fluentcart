@@ -147,7 +147,7 @@ class OrderCancelListener
                 'fire_hooks' => true,
                 'note' => sprintf(
                     /* translators: %d: order ID */
-                    __('Subscription automatically canceled because parent order #%d was canceled', 'wpkj-fluentcart-alipay-payment'),
+                    __('Subscription automatically canceled because parent order #%d was canceled', 'wpkj-alipay-gateway-for-fluentcart'),
                     $order->id
                 )
             ]);
@@ -183,10 +183,10 @@ class OrderCancelListener
 
             // Add log to order
             $order->addLog(
-                __('Subscription Auto-Canceled', 'wpkj-fluentcart-alipay-payment'),
+                __('Subscription Auto-Canceled', 'wpkj-alipay-gateway-for-fluentcart'),
                 sprintf(
                     /* translators: %d: subscription ID */
-                    __('Subscription #%d was automatically canceled due to order cancellation', 'wpkj-fluentcart-alipay-payment'),
+                    __('Subscription #%d was automatically canceled due to order cancellation', 'wpkj-alipay-gateway-for-fluentcart'),
                     $subscription->id
                 ),
                 'info'

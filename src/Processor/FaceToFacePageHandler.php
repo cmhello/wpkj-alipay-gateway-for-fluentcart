@@ -179,15 +179,15 @@ class FaceToFacePageHandler
 
         // Prepare i18n strings
         $i18n = [
-            'scan_title' => __('Scan QR Code to Pay with Alipay', 'wpkj-fluentcart-alipay-payment'),
-            'waiting_payment' => __('Waiting for payment...', 'wpkj-fluentcart-alipay-payment'),
-            'payment_success' => __('Payment successful! Redirecting...', 'wpkj-fluentcart-alipay-payment'),
-            'payment_failed' => __('Payment failed', 'wpkj-fluentcart-alipay-payment'),
-            'payment_timeout' => __('Payment timeout, please refresh and try again', 'wpkj-fluentcart-alipay-payment'),
-            'order_info' => __('Order Information', 'wpkj-fluentcart-alipay-payment'),
-            'order_number' => __('Order Number', 'wpkj-fluentcart-alipay-payment'),
-            'amount' => __('Amount', 'wpkj-fluentcart-alipay-payment'),
-            'scan_instruction' => __('Please open Alipay app and scan the QR code to complete payment', 'wpkj-fluentcart-alipay-payment'),
+            'scan_title' => __('Scan QR Code to Pay with Alipay', 'wpkj-alipay-gateway-for-fluentcart'),
+            'waiting_payment' => __('Waiting for payment...', 'wpkj-alipay-gateway-for-fluentcart'),
+            'payment_success' => __('Payment successful! Redirecting...', 'wpkj-alipay-gateway-for-fluentcart'),
+            'payment_failed' => __('Payment failed', 'wpkj-alipay-gateway-for-fluentcart'),
+            'payment_timeout' => __('Payment timeout, please refresh and try again', 'wpkj-alipay-gateway-for-fluentcart'),
+            'order_info' => __('Order Information', 'wpkj-alipay-gateway-for-fluentcart'),
+            'order_number' => __('Order Number', 'wpkj-alipay-gateway-for-fluentcart'),
+            'amount' => __('Amount', 'wpkj-alipay-gateway-for-fluentcart'),
+            'scan_instruction' => __('Please open Alipay app and scan the QR code to complete payment', 'wpkj-alipay-gateway-for-fluentcart'),
         ];
         
         // Localize script data
@@ -199,7 +199,7 @@ class FaceToFacePageHandler
                 'order_uuid' => $order->uuid,
                 'qr_code' => $qrCode,
                 'ajax_url' => admin_url('admin-ajax.php'),
-                'nonce' => wp_create_nonce('wpkj_alipay_check_status'),
+                'nonce' => wp_create_nonce('wpkj_alipay_f2f_check_payment_status_nonce'),
                 'i18n' => $i18n
             ]
         );
@@ -248,7 +248,7 @@ class FaceToFacePageHandler
             </div>
 
             <div class="instruction">
-                <?php echo esc_html__('The page will automatically refresh after payment is completed', 'wpkj-fluentcart-alipay-payment'); ?>
+                <?php echo esc_html__('The page will automatically refresh after payment is completed', 'wpkj-alipay-gateway-for-fluentcart'); ?>
             </div>
 
             <div class="security-footer">
@@ -256,7 +256,7 @@ class FaceToFacePageHandler
                     <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm6 9.09c0 4-2.55 7.7-6 8.83-3.45-1.13-6-4.82-6-8.83V6.31l6-2.12 6 2.12v4.78z"/>
                     <path d="M9.5 11.5l1.41 1.41L15.5 8.34 14.09 6.93l-3.18 3.18-1.41-1.42z"/>
                 </svg>
-                <span class="security-text"><?php echo esc_html__('Secure payment service provided by Alipay', 'wpkj-fluentcart-alipay-payment'); ?></span>
+                <span class="security-text"><?php echo esc_html__('Secure payment service provided by Alipay', 'wpkj-alipay-gateway-for-fluentcart'); ?></span>
             </div>
         </div>
     </div>

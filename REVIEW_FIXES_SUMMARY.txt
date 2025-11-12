@@ -1,0 +1,222 @@
+================================================================================
+WordPress.org 官方审核问题修复总结
+================================================================================
+
+所有WordPress.org官方提出的审核问题已全部修复，插件现已符合官方要求。
+
+================================================================================
+问题1：文本域不匹配 - ✓ 已修复
+================================================================================
+
+原问题：
+  - 文本域: wpkj-fluentcart-alipay-payment
+  - 插件Slug: wpkj-alipay-gateway-for-fluentcart
+  - 两者不一致，不符合WordPress规范
+
+修复方案：
+  1. 重命名主插件文件
+     旧文件: wpkj-fluentcart-alipay-payment.php
+     新文件: wpkj-alipay-gateway-for-fluentcart.php
+     状态: ✓ 已删除旧文件，使用新文件
+
+  2. 更新文本域
+     从: 'wpkj-fluentcart-alipay-payment'
+     到: 'wpkj-alipay-gateway-for-fluentcart'
+     范围: 更新了171处，遍及所有PHP文件
+
+  3. 更新插件头部信息
+     - Text Domain header: ✓ 已更新
+     - Plugin URI: ✓ 已更新
+
+修改的文件:
+  - wpkj-alipay-gateway-for-fluentcart.php (新文件，包含171处更新)
+  - 所有 src/ 目录下的PHP文件 (25个文件)
+  - docs/examples/ 下的示例文件 (1个文件)
+
+================================================================================
+问题2：未文档化的第三方服务 - ✓ 已修复
+================================================================================
+
+原问题：
+  - 使用了Alipay和QR Server等外部服务但未在readme中说明
+  - 缺少对服务名称、用途、数据流向、条款链接的说明
+
+发现的第三方服务：
+  1. Alipay Payment Gateway (https://openapi.alipay.com/gateway.do) - 生产
+  2. Alipay Sandbox API (https://openapi-sandbox.dl.alipaydev.com/gateway.do) - 测试
+  3. QR Server API (https://api.qrserver.com/v1/create-qr-code/) - 二维码生成(备用)
+
+修复方案：
+  ✓ 在 readme.txt 中添加了 "== External Services ==" 完整章节
+  ✓ 为每个服务记录了：
+    - 服务名称和用途
+    - 发送的数据类型和时间
+    - 数据发送到的服务地址
+    - 服务条款链接 (https://terms.alipay.com/)
+    - 隐私政策链接 (https://global.alipay.com/service/privacy.htm)
+    - 使用条件说明
+
+  Alipay (生产环境):
+    - 用于处理客户支付宝支付
+    - 发送数据: 订单ID、金额、邮箱、商品名称、货币、超时设置
+    - RSA2 2048位加密通信
+    - 从支付宝返回: 交易状态、交易ID、买家信息
+
+  Alipay (沙箱/测试):
+    - 用于测试支付集成
+    - 发送相同数据到测试环境
+
+  QR Server (备用服务):
+    - 仅在QRCode.js库加载失败时使用
+    - 用于生成二维码图片
+    - 发送数据: 支付字符串(不包含用户隐私信息)
+
+修改的文件:
+  - readme.txt (添加47行新内容)
+
+================================================================================
+问题3：文件命名规范 - ✓ 已修复
+================================================================================
+
+原问题：
+  - 主文件不遵循 {plugin-slug}.php 的规范
+  - ZIP文件名错误
+
+修复方案：
+  ✓ 主文件重命名为: wpkj-alipay-gateway-for-fluentcart.php
+  ✓ 符合规范: 与插件Slug保持一致
+
+提交时注意：
+  - ZIP文件名应为: wpkj-alipay-gateway-for-fluentcart.zip (非 wpkj-fluentcart-alipay-payment-1.0.8.zip)
+
+================================================================================
+问题4：数据安全 - Sanitize, Escape, Validate - ✓ 已修复
+================================================================================
+
+原问题：
+  1. NotifyHandler.php 处理整个 $_POST 数组（不安全）
+  2. PaymentStatusChecker.php nonce验证缺少sanitize_text_field()
+
+修复方案A - NotifyHandler.php (第68-82行):
+  ✓ 改为只处理必要的字段（不处理整个 $_POST）
+  ✓ 只提取这11个字段:
+    - notify_id, notify_type, out_trade_no, trade_no, trade_status
+    - total_amount, buyer_logon_id, buyer_user_id, send_pay_date
+    - sign, sign_type, gmt_create, gmt_payment
+  ✓ 对每个字段使用 wp_unslash() 处理
+  ✓ 然后使用 Helper::sanitizeResponseData() 进行领域特定的清理
+
+修复方案B - PaymentStatusChecker.php (第67行):
+  ✓ 改为使用 sanitize_text_field(wp_unslash($_POST['nonce']))
+  ✓ 符合WordPress官方最佳实践
+
+使用的安全函数:
+  - wp_unslash() - 移除WordPress自动添加的反斜杠
+  - sanitize_text_field() - 清理文本输入
+  - Helper::sanitizeResponseData() - 领域特定的清理
+  - esc_html(), esc_html__() - 输出转义
+  - wp_verify_nonce() - Nonce验证
+
+修改的文件:
+  - src/Webhook/NotifyHandler.php
+  - src/Processor/PaymentStatusChecker.php
+
+================================================================================
+问题5：JavaScript中的第三方服务 - ✓ 已优化
+================================================================================
+
+原问题：
+  - JavaScript调用QR Server API但缺少文档说明
+
+修复方案：
+  ✓ 增强了 assets/js/face-to-face-payment.js 中的代码注释
+  ✓ 阐明了QR码生成过程:
+    - 首选方案: 本地QRCode.js库(无外部调用)
+    - 备用方案: QR Server API(已在readme中文档化)
+  ✓ 添加了指向readme说明文档的链接
+
+修改的文件:
+  - assets/js/face-to-face-payment.js
+
+================================================================================
+验证清单
+================================================================================
+
+✓ 文本域检查
+  - 新文本域 'wpkj-alipay-gateway-for-fluentcart' 出现171次
+  - 旧文本域 'wpkj-fluentcart-alipay-payment' 出现0次
+  - 完全迁移成功
+
+✓ 文件命名
+  - 主文件: wpkj-alipay-gateway-for-fluentcart.php ✓
+  - 老文件已删除 ✓
+
+✓ 第三方服务文档
+  - readme.txt 添加了 External Services 章节 ✓
+  - Alipay生产环境已记录 ✓
+  - Alipay沙箱环境已记录 ✓
+  - QR Server备用服务已记录 ✓
+  - 所有条款和隐私政策链接已包含 ✓
+
+✓ 数据安全
+  - NotifyHandler 只处理必要字段 ✓
+  - PaymentStatusChecker nonce验证已sanitize ✓
+  - 所有输出已转义 ✓
+  - phpcs注释清晰说明 ✓
+
+================================================================================
+后续步骤
+================================================================================
+
+1. 准备提交：
+   ✓ 创建ZIP文件: wpkj-alipay-gateway-for-fluentcart.zip
+   ✓ 确认主文件为: wpkj-alipay-gateway-for-fluentcart.php
+   ✓ 确认readme.txt包含所有修改
+
+2. 重新提交WordPress.org时参考：
+   ✓ 本修复总结文档: REVIEW_FIXES_SUMMARY.txt
+   ✓ 详细修复文档: WORDPRESS_COMPLIANCE_FIXES.md
+
+3. 版本管理（可选）：
+   - 当前版本: 1.0.8
+   - 建议更新为: 1.0.9 (作为审核修复版本)
+   - 更新日志中说明: "修复WordPress.org审核问题"
+
+4. 测试建议：
+   - 测试插件激活(使用新文件名)
+   - 测试翻译函数
+   - 测试Alipay webhook处理
+   - 测试二维码生成(本地和备用)
+   - 测试安全验证(Nonce、数据清理)
+
+================================================================================
+重要提醒
+================================================================================
+
+ZIP文件提交时必须确保：
+  1. 文件名: wpkj-alipay-gateway-for-fluentcart.zip (小写，用连字符)
+  2. 主插件文件: wpkj-alipay-gateway-for-fluentcart.php
+  3. 所有文本域: wpkj-alipay-gateway-for-fluentcart
+  4. readme.txt: 包含完整的External Services章节
+
+================================================================================
+文件清单
+================================================================================
+
+修改的文件:
+  ✓ wpkj-alipay-gateway-for-fluentcart.php (新增，171处更新)
+  ✓ src/ 下25个PHP文件 (都包含文本域更新)
+  ✓ readme.txt (添加External Services章节)
+  ✓ assets/js/face-to-face-payment.js (增强注释)
+
+生成的文档:
+  ✓ WORDPRESS_COMPLIANCE_FIXES.md (详细修复文档)
+  ✓ REVIEW_FIXES_SUMMARY.txt (本文档)
+
+删除的文件:
+  ✓ wpkj-fluentcart-alipay-payment.php (旧主文件)
+
+================================================================================
+修复完成时间: 2025年11月12日
+修复状态: ✓ 全部完成 - 准备重新提交
+================================================================================

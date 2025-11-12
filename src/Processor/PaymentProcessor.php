@@ -64,7 +64,7 @@ class PaymentProcessor
         try {
             if ($transaction->status === Status::TRANSACTION_SUCCEEDED) {
                 throw new \Exception(
-                    __('Transaction has already been completed.', 'wpkj-fluentcart-alipay-payment')
+                    __('Transaction has already been completed.', 'wpkj-alipay-gateway-for-fluentcart')
                 );
             }
 
@@ -108,7 +108,7 @@ class PaymentProcessor
                 'status' => 'success',
                 'nextAction' => 'redirect',
                 'actionName' => 'custom',
-                'message' => __('Redirecting to Alipay payment gateway...', 'wpkj-fluentcart-alipay-payment'),
+                'message' => __('Redirecting to Alipay payment gateway...', 'wpkj-alipay-gateway-for-fluentcart'),
                 'data' => [
                     'order' => [
                         'uuid' => $order->uuid,
@@ -183,7 +183,7 @@ class PaymentProcessor
             // redirect_to should be the direct URL string
             return [
                 'status' => 'success',
-                'message' => __('Redirecting to payment page...', 'wpkj-fluentcart-alipay-payment'),
+                'message' => __('Redirecting to payment page...', 'wpkj-alipay-gateway-for-fluentcart'),
                 'redirect_to' => $qrPageUrl
             ];
 
@@ -218,7 +218,7 @@ class PaymentProcessor
         // Validate payment amount
         if ($transaction->total <= 0) {
             throw new \Exception(
-                esc_html__('Invalid payment amount. Amount must be greater than zero.', 'wpkj-fluentcart-alipay-payment')
+                esc_html__('Invalid payment amount. Amount must be greater than zero.', 'wpkj-alipay-gateway-for-fluentcart')
             );
         }
 
@@ -227,7 +227,7 @@ class PaymentProcessor
             throw new \Exception(
                 sprintf(
                     /* translators: %s: maximum transaction amount in CNY */
-                    esc_html__('Payment amount exceeds Alipay single transaction limit (%s CNY).', 'wpkj-fluentcart-alipay-payment'),
+                    esc_html__('Payment amount exceeds Alipay single transaction limit (%s CNY).', 'wpkj-alipay-gateway-for-fluentcart'),
                     number_format(AlipayConfig::MAX_SINGLE_TRANSACTION_AMOUNT)
                 )
             );
@@ -289,7 +289,7 @@ class PaymentProcessor
         $siteName = get_bloginfo('name');
         $subject = sprintf(
             /* translators: %s: website name */
-            __('Order from %s', 'wpkj-fluentcart-alipay-payment'),
+            __('Order from %s', 'wpkj-alipay-gateway-for-fluentcart'),
             $siteName
         );
         
@@ -453,10 +453,10 @@ class PaymentProcessor
 
         // Add log to order activity
         fluent_cart_add_log(
-            __('Alipay Payment Confirmation', 'wpkj-fluentcart-alipay-payment'),
+            __('Alipay Payment Confirmation', 'wpkj-alipay-gateway-for-fluentcart'),
             sprintf(
                 /* translators: %s: Alipay transaction ID */
-                __('Payment confirmed from Alipay. Trade No: %s', 'wpkj-fluentcart-alipay-payment'),
+                __('Payment confirmed from Alipay. Trade No: %s', 'wpkj-alipay-gateway-for-fluentcart'),
                 $alipayData['trade_no']
             ),
             'info',
@@ -496,10 +496,10 @@ class PaymentProcessor
 
         // Add log to order activity
         fluent_cart_add_log(
-            __('Alipay Payment Failed', 'wpkj-fluentcart-alipay-payment'),
+            __('Alipay Payment Failed', 'wpkj-alipay-gateway-for-fluentcart'),
             sprintf(
                 /* translators: %s: failure reason */
-                __('Payment failed. Reason: %s', 'wpkj-fluentcart-alipay-payment'),
+                __('Payment failed. Reason: %s', 'wpkj-alipay-gateway-for-fluentcart'),
                 $data['reason'] ?? 'Unknown'
             ),
             'error',

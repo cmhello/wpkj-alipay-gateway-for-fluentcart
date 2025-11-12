@@ -1,4 +1,4 @@
-# WPKJ FluentCart Alipay Payment
+# WPKJ Alipay Gateway for FluentCart
 
 A professional, feature-rich Alipay payment gateway for FluentCart with intelligent client detection, full subscription support, and enterprise-grade security.
 
@@ -86,7 +86,7 @@ Comprehensive subscription payment support with dual-mode strategy:
 ### Via WP-CLI
 
 ```bash
-wp plugin install wpkj-fluentcart-alipay-payment --activate
+wp plugin install wpkj-alipay-gateway-for-fluentcart --activate
 ```
 
 ## ⚙️ Configuration
@@ -188,7 +188,7 @@ For recurring payments with automatic renewal:
 ### Directory Structure
 
 ```
-wpkj-fluentcart-alipay-payment/
+wpkj-alipay-gateway-for-fluentcart/
 ├── src/
 │   ├── API/              # Alipay API communication
 │   │   └── AlipayAPI.php
@@ -225,8 +225,8 @@ wpkj-fluentcart-alipay-payment/
 │   ├── css/             # Stylesheets
 │   └── js/              # JavaScript files
 ├── languages/           # Translation files
-│   ├── wpkj-fluentcart-alipay-payment.pot
-│   └── wpkj-fluentcart-alipay-payment-zh_CN.po
+│   ├── wpkj-alipay-gateway-for-fluentcart.pot
+│   └── wpkj-alipay-gateway-for-fluentcart-zh_CN.po
 └── docs/                # Additional documentation
 ```
 
@@ -356,7 +356,7 @@ define('WP_DEBUG_LOG', true);
 For support, bug reports, and feature requests:
 
 - **Website**: [https://www.wpdaxue.com](https://www.wpdaxue.com)
-- **Documentation**: [https://www.wpdaxue.com/wpkj-fluentcart-alipay-payment.html](https://www.wpdaxue.com/wpkj-fluentcart-alipay-payment.html)
+- **Documentation**: [https://www.wpdaxue.com/wpkj-alipay-gateway-for-fluentcart.html](https://www.wpdaxue.com/wpkj-alipay-gateway-for-fluentcart.html)
 - **Email**: support@wpdaxue.com
 
 ## 📄 License

@@ -51,7 +51,7 @@ class AlipaySubscriptions extends AbstractSubscriptionModule
         if ($subscriptionModel->current_payment_method !== 'alipay') {
             return new \WP_Error(
                 'invalid_payment_method',
-                __('This subscription is not using Alipay as payment method.', 'wpkj-fluentcart-alipay-payment')
+                __('This subscription is not using Alipay as payment method.', 'wpkj-alipay-gateway-for-fluentcart')
             );
         }
 
@@ -73,7 +73,7 @@ class AlipaySubscriptions extends AbstractSubscriptionModule
                 
                 return new \WP_Error(
                     'no_transaction',
-                    __('No valid Alipay transaction found for this subscription.', 'wpkj-fluentcart-alipay-payment')
+                    __('No valid Alipay transaction found for this subscription.', 'wpkj-alipay-gateway-for-fluentcart')
                 );
             }
 
@@ -127,7 +127,7 @@ class AlipaySubscriptions extends AbstractSubscriptionModule
 
             return [
                 'status' => 'success',
-                'message' => __('Subscription synced successfully.', 'wpkj-fluentcart-alipay-payment'),
+                'message' => __('Subscription synced successfully.', 'wpkj-alipay-gateway-for-fluentcart'),
                 'data' => [
                     'trade_status' => $tradeStatus,
                     'subscription_status' => $subscriptionModel->status
@@ -165,7 +165,7 @@ class AlipaySubscriptions extends AbstractSubscriptionModule
             if (!$subscription) {
                 return new \WP_Error(
                     'subscription_not_found',
-                    __('Subscription not found.', 'wpkj-fluentcart-alipay-payment')
+                    __('Subscription not found.', 'wpkj-alipay-gateway-for-fluentcart')
                 );
             }
 
@@ -182,7 +182,7 @@ class AlipaySubscriptions extends AbstractSubscriptionModule
 
             return [
                 'status' => 'success',
-                'message' => __('Subscription cancelled successfully.', 'wpkj-fluentcart-alipay-payment')
+                'message' => __('Subscription cancelled successfully.', 'wpkj-alipay-gateway-for-fluentcart')
             ];
 
         } catch (\Exception $e) {
@@ -320,11 +320,11 @@ class AlipaySubscriptions extends AbstractSubscriptionModule
         $subscription = Subscription::find($subscriptionId);
         
         if (!$subscription) {
-            throw new \Exception(esc_html__('Subscription not found.', 'wpkj-fluentcart-alipay-payment'));
+            throw new \Exception(esc_html__('Subscription not found.', 'wpkj-alipay-gateway-for-fluentcart'));
         }
 
         if ($subscription->current_payment_method !== 'alipay') {
-            throw new \Exception(esc_html__('This subscription is not using Alipay.', 'wpkj-fluentcart-alipay-payment'));
+            throw new \Exception(esc_html__('This subscription is not using Alipay.', 'wpkj-alipay-gateway-for-fluentcart'));
         }
 
         Logger::info('Alipay Subscription Reactivation via FluentCart Standard Method', [

@@ -1,11 +1,11 @@
-=== WPKJ FluentCart Alipay Payment ===
+=== WPKJ Alipay Gateway for FluentCart ===
 Contributors: cmhello
-Donate link: https://www.wpdaxue.com/wpkj-fluentcart-alipay-payment.html
+Donate link: https://www.wpdaxue.com/wpkj-alipay-gateway-for-fluentcart.html
 Tags: fluentcart, alipay, payment gateway, china payment
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.2
-Stable tag: 1.0.8
+Stable tag: 1.0.8y
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -13,7 +13,7 @@ Professional Alipay payment gateway for FluentCart with multi-platform support, 
 
 == Description ==
 
-WPKJ FluentCart Alipay Payment is a feature-rich, enterprise-grade payment gateway that seamlessly integrates Alipay with FluentCart. It intelligently detects user environments and automatically selects the optimal payment interface for the best user experience.
+WPKJ Alipay Gateway for FluentCart is a feature-rich, enterprise-grade payment gateway that seamlessly integrates Alipay with FluentCart. It intelligently detects user environments and automatically selects the optimal payment interface for the best user experience.
 
 = Key Features =
 
@@ -76,7 +76,7 @@ CNY (Chinese Yuan), USD, EUR, GBP, HKD, JPY, KRW, SGD, AUD, CAD, CHF, NZD, THB, 
 
 1. Log in to your WordPress admin panel
 2. Navigate to Plugins > Add New
-3. Search for "WPKJ FluentCart Alipay Payment"
+3. Search for "WPKJ Alipay Gateway for FluentCart"
 4. Click "Install Now" and then "Activate"
 5. Go to FluentCart > Settings > Payment Methods
 6. Configure your Alipay credentials
@@ -323,14 +323,14 @@ Important update for subscription users. Adds automatic subscription cancellatio
 Adds Face-to-Face QR payment and fixes encoding issues. Recommended for merchants in China.
 
 = 1.0.0 =
-Initial release of WPKJ FluentCart Alipay Payment gateway.
+Initial release of WPKJ Alipay Gateway for FluentCart.
 
 == Support and Documentation ==
 
 For comprehensive documentation, tutorials, and support:
 
 * **Official Website**: [https://www.wpdaxue.com](https://www.wpdaxue.com)
-* **Documentation**: [https://www.wpdaxue.com/wpkj-fluentcart-alipay-payment.html](https://www.wpdaxue.com/wpkj-fluentcart-alipay-payment.html)
+* **Documentation**: [https://www.wpdaxue.com/wpkj-alipay-gateway-for-fluentcart.html](https://www.wpdaxue.com/wpkj-alipay-gateway-for-fluentcart.html)
 * **Support Email**: support@wwpdaxue.com
 * **GitHub**: Report issues and contribute
 
@@ -343,6 +343,38 @@ This plugin does NOT:
 - Store sensitive payment information
 
 Payment data is transmitted securely via HTTPS directly to Alipay's servers. The plugin only stores transaction IDs and order metadata necessary for order fulfillment.
+
+== External Services ==
+
+This plugin relies on external services for payment processing. Below is documentation for each external service:
+
+=== Alipay Payment Gateway (Production) ===
+
+**Service**: Alipay Payment Gateway API
+**What it is**: Official payment processing service operated by Alipay, a leading Chinese payment platform
+**What it's used for**: Process online payments from customers using Alipay accounts
+**Data sent**: Order ID, order amount, customer email, payment description/subject, currency, and timeout configuration
+**When it's sent**: When a customer initiates a payment and selects Alipay as the payment method
+**Data sent to**: Alipay servers (https://openapi.alipay.com/gateway.do for production)
+**Terms of Service**: https://render.alipay.com/p/yuyan/180020010001196791/preview.html?agreementId=AG00000006
+**Privacy Policy**: https://render.alipay.com/p/yuyan/180020010001196791/preview.html?agreementId=AG00000132
+**Additional Info**: Communication is RSA2 2048-bit encrypted. Alipay returns trade status, transaction ID, and buyer information
+
+=== Alipay Sandbox API (Testing) ===
+
+**Service**: Alipay Sandbox API
+**What it is**: Test environment provided by Alipay for merchants to test payment integration before going live
+**What it's used for**: Process test/sandbox payments when the plugin is in test mode
+**Data sent**: Same as production (Order ID, amount, email, subject, currency, timeout)
+**When it's sent**: When plugin is configured in test mode and customer initiates a test payment
+**Data sent to**: Alipay sandbox servers (https://openapi-sandbox.dl.alipaydev.com/gateway.do)
+**Terms of Service**: https://render.alipay.com/p/yuyan/180020010001196791/preview.html?agreementId=AG00000006
+**Privacy Policy**: https://render.alipay.com/p/yuyan/180020010001196791/preview.html?agreementId=AG00000132
+**Additional Info**: Uses separate test credentials from production
+
+=== User Consent ===
+
+Users are informed about Alipay payment processing when they select Alipay as their payment method. They accept data transmission to Alipay's services as part of the payment process. The Alipay terms and privacy policy are accessible via links above.
 
 == Credits ==
 

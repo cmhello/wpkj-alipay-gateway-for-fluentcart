@@ -184,7 +184,7 @@ class AlipayAPI
                     'alipay_http_error',
                     sprintf(
                         /* translators: %d: HTTP status code */
-                        __('HTTP %d error from Alipay', 'wpkj-fluentcart-alipay-payment'),
+                        __('HTTP %d error from Alipay', 'wpkj-alipay-gateway-for-fluentcart'),
                         $httpCode
                     )
                 );
@@ -193,7 +193,7 @@ class AlipayAPI
             $body = wp_remote_retrieve_body($response);
             
             if (empty($body)) {
-                return new \WP_Error('alipay_precreate_error', __('Empty response from Alipay', 'wpkj-fluentcart-alipay-payment'));
+                return new \WP_Error('alipay_precreate_error', __('Empty response from Alipay', 'wpkj-alipay-gateway-for-fluentcart'));
             }
 
             $result = json_decode($body, true);
@@ -207,7 +207,7 @@ class AlipayAPI
                 ]);
                 return new \WP_Error(
                     'alipay_precreate_error',
-                    __('Invalid JSON response from Alipay', 'wpkj-fluentcart-alipay-payment')
+                    __('Invalid JSON response from Alipay', 'wpkj-alipay-gateway-for-fluentcart')
                 );
             }
 
@@ -220,14 +220,14 @@ class AlipayAPI
                 ]);
                 return new \WP_Error(
                     'alipay_precreate_error',
-                    __('Invalid response structure from Alipay', 'wpkj-fluentcart-alipay-payment')
+                    __('Invalid response structure from Alipay', 'wpkj-alipay-gateway-for-fluentcart')
                 );
             }
 
             $precreateResponse = $result[$responseKey];
 
             if (!isset($precreateResponse['code']) || $precreateResponse['code'] !== '10000') {
-                $errorMsg = $precreateResponse['sub_msg'] ?? $precreateResponse['msg'] ?? __('Face-to-Face payment creation failed', 'wpkj-fluentcart-alipay-payment');
+                $errorMsg = $precreateResponse['sub_msg'] ?? $precreateResponse['msg'] ?? __('Face-to-Face payment creation failed', 'wpkj-alipay-gateway-for-fluentcart');
                 
                 Logger::error('Precreate Failed', [
                     'out_trade_no' => $orderData['out_trade_no'],
@@ -245,7 +245,7 @@ class AlipayAPI
                 ]);
                 return new \WP_Error(
                     'alipay_precreate_error',
-                    __('QR code not found in response', 'wpkj-fluentcart-alipay-payment')
+                    __('QR code not found in response', 'wpkj-alipay-gateway-for-fluentcart')
                 );
             }
 
@@ -384,7 +384,7 @@ class AlipayAPI
             throw new \Exception(
                 sprintf(
                     /* translators: %s: OpenSSL error message */
-                    esc_html__('Failed to generate signature: %s', 'wpkj-fluentcart-alipay-payment'),
+                    esc_html__('Failed to generate signature: %s', 'wpkj-alipay-gateway-for-fluentcart'),
                     esc_html($opensslError)
                 )
             );
@@ -512,7 +512,7 @@ class AlipayAPI
                     'alipay_http_error',
                     sprintf(
                         /* translators: %d: HTTP status code */
-                        __('HTTP %d error from Alipay', 'wpkj-fluentcart-alipay-payment'),
+                        __('HTTP %d error from Alipay', 'wpkj-alipay-gateway-for-fluentcart'),
                         $httpCode
                     )
                 );
@@ -522,7 +522,7 @@ class AlipayAPI
             
             // Validate response body
             if (empty($body)) {
-                return new \WP_Error('alipay_query_error', __('Empty response from Alipay', 'wpkj-fluentcart-alipay-payment'));
+                return new \WP_Error('alipay_query_error', __('Empty response from Alipay', 'wpkj-alipay-gateway-for-fluentcart'));
             }
 
             $result = json_decode($body, true);
@@ -536,14 +536,14 @@ class AlipayAPI
                 ]);
                 return new \WP_Error(
                     'alipay_query_error',
-                    __('Invalid JSON response from Alipay', 'wpkj-fluentcart-alipay-payment')
+                    __('Invalid JSON response from Alipay', 'wpkj-alipay-gateway-for-fluentcart')
                 );
             }
 
             if (!is_array($result)) {
                 return new \WP_Error(
                     'alipay_query_error',
-                    __('Unexpected response format from Alipay', 'wpkj-fluentcart-alipay-payment')
+                    __('Unexpected response format from Alipay', 'wpkj-alipay-gateway-for-fluentcart')
                 );
             }
 
@@ -608,7 +608,7 @@ class AlipayAPI
                     'alipay_http_error',
                     sprintf(
                         /* translators: %d: HTTP status code */
-                        __('HTTP %d error from Alipay', 'wpkj-fluentcart-alipay-payment'),
+                        __('HTTP %d error from Alipay', 'wpkj-alipay-gateway-for-fluentcart'),
                         $httpCode
                     )
                 );
@@ -618,7 +618,7 @@ class AlipayAPI
             
             // Validate response body
             if (empty($body)) {
-                return new \WP_Error('alipay_refund_error', __('Empty response from Alipay', 'wpkj-fluentcart-alipay-payment'));
+                return new \WP_Error('alipay_refund_error', __('Empty response from Alipay', 'wpkj-alipay-gateway-for-fluentcart'));
             }
 
             $result = json_decode($body, true);
@@ -632,14 +632,14 @@ class AlipayAPI
                 ]);
                 return new \WP_Error(
                     'alipay_refund_error',
-                    __('Invalid JSON response from Alipay', 'wpkj-fluentcart-alipay-payment')
+                    __('Invalid JSON response from Alipay', 'wpkj-alipay-gateway-for-fluentcart')
                 );
             }
 
             if (!is_array($result)) {
                 return new \WP_Error(
                     'alipay_refund_error',
-                    __('Unexpected response format from Alipay', 'wpkj-fluentcart-alipay-payment')
+                    __('Unexpected response format from Alipay', 'wpkj-alipay-gateway-for-fluentcart')
                 );
             }
 
@@ -701,7 +701,7 @@ class AlipayAPI
                     'alipay_http_error',
                     sprintf(
                         /* translators: %d: HTTP status code */
-                        __('HTTP %d error from Alipay', 'wpkj-fluentcart-alipay-payment'),
+                        __('HTTP %d error from Alipay', 'wpkj-alipay-gateway-for-fluentcart'),
                         $httpCode
                     )
                 );
@@ -710,7 +710,7 @@ class AlipayAPI
             $body = wp_remote_retrieve_body($response);
             
             if (empty($body)) {
-                return new \WP_Error('alipay_query_error', __('Empty response from Alipay', 'wpkj-fluentcart-alipay-payment'));
+                return new \WP_Error('alipay_query_error', __('Empty response from Alipay', 'wpkj-alipay-gateway-for-fluentcart'));
             }
 
             // Ensure UTF-8 encoding to prevent JSON decode errors
@@ -729,7 +729,7 @@ class AlipayAPI
                 ]);
                 return new \WP_Error(
                     'alipay_query_error',
-                    __('Invalid JSON response from Alipay', 'wpkj-fluentcart-alipay-payment')
+                    __('Invalid JSON response from Alipay', 'wpkj-alipay-gateway-for-fluentcart')
                 );
             }
 
@@ -742,7 +742,7 @@ class AlipayAPI
                 ]);
                 return new \WP_Error(
                     'alipay_query_error',
-                    __('Invalid response structure from Alipay', 'wpkj-fluentcart-alipay-payment')
+                    __('Invalid response structure from Alipay', 'wpkj-alipay-gateway-for-fluentcart')
                 );
             }
 
