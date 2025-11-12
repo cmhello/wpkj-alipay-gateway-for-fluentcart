@@ -3,7 +3,7 @@
  * Plugin Name: WPKJ Alipay Gateway for FluentCart
  * Plugin URI: https://www.wpdaxue.com/wpkj-alipay-gateway-for-fluentcart.html
  * Description: Alipay payment gateway integration for FluentCart - Support PC Web, Mobile WAP, Face-to-Face, In-App payments, and Subscriptions
- * Version: 1.0.8
+ * Version: 1.0.9
  * Requires at least: 6.5
  * Requires PHP: 8.2
  * Author: WPKJ Team
@@ -16,7 +16,7 @@
 
 defined('ABSPATH') || exit;
 
-define('WPKJ_FC_ALIPAY_VERSION', '1.0.8');
+define('WPKJ_FC_ALIPAY_VERSION', '1.0.9');
 define('WPKJ_FC_ALIPAY_FILE', __FILE__);
 define('WPKJ_FC_ALIPAY_PATH', plugin_dir_path(__FILE__));
 define('WPKJ_FC_ALIPAY_URL', plugin_dir_url(__FILE__));

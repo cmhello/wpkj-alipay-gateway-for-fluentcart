@@ -119,7 +119,7 @@ class FaceToFacePageHandler
                 'order_hash' => $order->uuid
             ], $receiptUrl);
             
-            wp_redirect($receiptUrl);
+            wp_safe_redirect($receiptUrl);
             exit;
         }
 

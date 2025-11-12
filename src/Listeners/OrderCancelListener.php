@@ -77,7 +77,7 @@ class OrderCancelListener
         $subscription = Subscription::where('parent_order_id', $order->id)->first();
         
         if (!$subscription) {
-            Logger::debug('Order Cancel Event: No subscription associated with this order', [
+            Logger::info('Order Cancel Event: No subscription associated with this order', [
                 'order_id' => $order->id,
                 'order_type' => $order->type ?? 'unknown'
             ]);
@@ -105,7 +105,7 @@ class OrderCancelListener
         // Only process Alipay payment orders
         // This prevents conflicts with other payment gateways' own cancellation logic
         if ($order->payment_method !== 'alipay') {
-            Logger::debug('Order Cancel Event: Not an Alipay payment order', [
+            Logger::info('Order Cancel Event: Not an Alipay payment order', [
                 'order_id' => $order->id,
                 'payment_method' => $order->payment_method,
                 'subscription_id' => $subscription->id

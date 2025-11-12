@@ -5,7 +5,7 @@ Tags: fluentcart, alipay, payment gateway, china payment
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.2
-Stable tag: 1.0.8y
+Stable tag: 1.0.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -175,6 +175,30 @@ Enable QR code payments in settings. Customers can scan QR codes with their Alip
 
 == Changelog ==
 
+= 1.0.9 =
+Release Date: November 12, 2025
+
+* Security: Renamed nonce field to `wpkj_alipay_f2f_nonce` to prevent conflicts with other plugins
+* Security: Updated nonce action name to `wpkj_alipay_f2f_check_payment_status_nonce` for better uniqueness
+* Security: Removed external QR code generation via api.qrserver.com - now uses local QRCode.js library only
+* Security: Renamed POST field from generic `nonce` to `wpkj_alipay_f2f_nonce` in Face-to-Face payment AJAX handler
+* Security: Added phpcs annotations for webhook nonce verification exceptions (Alipay server requests don't require WordPress nonce)
+* Security: Changed wp_redirect() to wp_safe_redirect() in FaceToFacePageHandler to prevent malicious redirects
+* Improvement: Optimized POST data processing in webhook handler - now only extracts required fields
+* Improvement: Refined Alipay notification field handling for better security and reduced data exposure
+* Improvement: Removed unused webhook fields (send_pay_date, gmt_create) - only processes necessary fields
+* Improvement: Updated NotifyHandler to only handle essential Alipay notification fields
+* Fixed: Corrected required fields list in webhook notification processing
+* Fixed: Logger::debug() method call replaced with Logger::info() in OrderCancelListener and TransactionHelper
+* Fixed: Plugin directory name updated to wpkj-alipay-gateway-for-fluentcart to match WordPress.org slug
+* Refactoring: PaymentStatusChecker nonce verification now uses unique field and action names
+* Refactoring: FaceToFacePageHandler nonce generation updated to match new naming convention
+* Refactoring: JavaScript Face-to-Face payment handler uses new nonce field name
+* Compliance: All changes comply with WordPress.org plugin directory standards and security guidelines
+* Note: Nonce field renamed in multiple files: PaymentStatusChecker.php, FaceToFacePageHandler.php, face-to-face-payment.js
+* Note: NotifyHandler.php updated with proper phpcs annotations for webhook data handling
+* Note: No functional impact - only security and naming improvements
+
 = 1.0.8 =
 Release Date: October 23, 2025
 
@@ -306,6 +330,9 @@ Release Date: October 15, 2025
 * i18n/l10n ready
 
 == Upgrade Notice ==
+
+= 1.0.9 =
+Security update: Enhanced nonce field naming to prevent plugin conflicts, removed external QR code API dependency, and improved webhook data handling. All changes comply with WordPress.org standards. Recommended for all users.
 
 = 1.0.7 =
 Critical fixes and code refactoring for subscription functionality! This version fixes issues where next_billing_date and bill_count were not properly set after payments, preventing automatic renewals. Also eliminates code duplication for better maintainability. Highly recommended for all subscription users.

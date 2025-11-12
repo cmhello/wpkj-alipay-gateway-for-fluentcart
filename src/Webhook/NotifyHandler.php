@@ -77,8 +77,9 @@ class NotifyHandler
         
         $data = [];
         foreach ($requiredFields as $field) {
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Webhook data from Alipay server (not form input)
             if (isset($_POST[$field])) {
-                // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Will be sanitized below
+                // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Webhook data from Alipay server (not form input), will be sanitized below
                 $data[$field] = wp_unslash($_POST[$field]);
             }
         }

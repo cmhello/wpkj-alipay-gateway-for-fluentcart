@@ -65,7 +65,7 @@ class TransactionHelper
         $transaction->meta = $meta;
         $transaction->save();
 
-        Logger::debug('Out Trade Number Stored', [
+        Logger::info('Out Trade Number Stored', [
             'transaction_id' => $transaction->id,
             'out_trade_no' => $outTradeNo
         ]);
@@ -140,7 +140,7 @@ class TransactionHelper
         // Acquire lock
         set_transient($lockKey, true, self::LOCK_TIMEOUT);
         
-        Logger::debug('Idempotency Lock Acquired', [
+        Logger::info('Idempotency Lock Acquired', [
             'operation' => $operation,
             'unique_key' => $uniqueKey,
             'timeout' => self::LOCK_TIMEOUT
@@ -153,7 +153,7 @@ class TransactionHelper
             // Release lock on success
             delete_transient($lockKey);
             
-            Logger::debug('Idempotency Lock Released', [
+            Logger::info('Idempotency Lock Released', [
                 'operation' => $operation,
                 'unique_key' => $uniqueKey
             ]);
