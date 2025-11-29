@@ -1,8 +1,8 @@
-# Copyright (C) 2025 WPKJ Team
+# Copyright (C) 2025 WPDAXUE.COM
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: WPKJ Alipay Gateway for FluentCart\n"
+"Project-Id-Version: WPKJ Payment Gateway for FluentCart with Alipay\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wpkj-fluentcart-"
 "alipay-payment\n"
 "POT-Creation-Date: 2025-11-12 20:18+0800\n"
@@ -662,13 +662,13 @@ msgstr "没有剩余可退款金额。"
 #: wpkj-alipay-gateway-for-fluentcart.php:33
 #: wpkj-alipay-gateway-for-fluentcart.php:140
 msgid ""
-"WPKJ Alipay Gateway for FluentCart requires FluentCart to be installed and "
+"WPKJ Payment Gateway for FluentCart with Alipay requires FluentCart to be installed and "
 "activated."
 msgstr "WPKJ FluentCart 支付宝支付需要安装并激活 FluentCart。"
 
 #: wpkj-alipay-gateway-for-fluentcart.php:45
 msgid ""
-"WPKJ Alipay Gateway for FluentCart requires FluentCart version 1.2.0 or "
+"WPKJ Payment Gateway for FluentCart with Alipay requires FluentCart version 1.2.0 or "
 "higher."
 msgstr "WPKJ FluentCart 支付宝支付需要 FluentCart 1.2.0 或更高版本。"
 

@@ -1,4 +1,4 @@
-# WPKJ Alipay Gateway for FluentCart
+# WPKJ Payment Gateway for FluentCart with Alipay
 
 A professional, feature-rich Alipay payment gateway for FluentCart with intelligent client detection, full subscription support, and enterprise-grade security.
 
@@ -364,7 +364,7 @@ For support, bug reports, and feature requests:
 This plugin is licensed under GPL v2 or later.
 
 ```
-Copyright (C) 2025 WPKJ Team
+Copyright (C) 2025 WPDAXUE.COM
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -379,13 +379,13 @@ GNU General Public License for more details.
 
 ## 👥 Credits
 
-Developed and maintained by **WPKJ Team**
+Developed and maintained by **WPDAXUE.COM**
 
-- Lead Developer: WPKJ Team
+- Lead Developer: WPDAXUE.COM
 - Contributors: Community
 - Based on: FluentCart Payment Gateway Framework
 - Tested with: WordPress 6.8.3, FluentCart 1.2.0+
 
 ---
 
-**Made with ❤️ by WPKJ Team**
+**Made with ❤️ by WPDAXUE.COM**

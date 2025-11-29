@@ -1,8 +1,8 @@
-# Copyright (C) 2025 WPKJ Team
+# Copyright (C) 2025 WPDAXUE.COM
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: WPKJ Alipay Gateway for FluentCart 1.0.5\n"
+"Project-Id-Version: WPKJ Payment Gateway for FluentCart with Alipay 1.0.5\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wpkj-alipay-gateway-for-fluentcart\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,7 +16,7 @@ msgstr ""
 
 #. Plugin Name of the plugin
 #: wpkj-alipay-gateway-for-fluentcart.php
-msgid "WPKJ Alipay Gateway for FluentCart"
+msgid "WPKJ Payment Gateway for FluentCart with Alipay"
 msgstr ""
 
 #. Plugin URI of the plugin
@@ -31,7 +31,7 @@ msgstr ""
 
 #. Author of the plugin
 #: wpkj-alipay-gateway-for-fluentcart.php
-msgid "WPKJ Team"
+msgid "WPDAXUE.COM"
 msgstr ""
 
 #. Author URI of the plugin
@@ -591,11 +591,11 @@ msgstr ""
 
 #: wpkj-alipay-gateway-for-fluentcart.php:33
 #: wpkj-alipay-gateway-for-fluentcart.php:129
-msgid "WPKJ Alipay Gateway for FluentCart requires FluentCart to be installed and activated."
+msgid "WPKJ Payment Gateway for FluentCart with Alipay requires FluentCart to be installed and activated."
 msgstr ""
 
 #: wpkj-alipay-gateway-for-fluentcart.php:45
-msgid "WPKJ Alipay Gateway for FluentCart requires FluentCart version 1.2.0 or higher."
+msgid "WPKJ Payment Gateway for FluentCart with Alipay requires FluentCart version 1.2.0 or higher."
 msgstr ""
 
 #: wpkj-alipay-gateway-for-fluentcart.php:130

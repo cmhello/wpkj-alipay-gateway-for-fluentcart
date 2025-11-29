@@ -255,5 +255,5 @@ When resubmitting to WordPress.org:
 ---
 
 **Last Updated**: November 12, 2025
-**Changes Made By**: WPKJ Team
+**Changes Made By**: WPDAXUE.COM
 

@@ -1,12 +1,12 @@
 <?php
 /**
- * Plugin Name: WPKJ Alipay Gateway for FluentCart
+ * Plugin Name: WPKJ Payment Gateway for FluentCart with Alipay
  * Plugin URI: https://www.wpdaxue.com/wpkj-alipay-gateway-for-fluentcart.html
- * Description: Alipay payment gateway integration for FluentCart - Support PC Web, Mobile WAP, Face-to-Face, In-App payments, and Subscriptions
- * Version: 1.0.9
+ * Description: Payment gateway integration for FluentCart with Alipay - Support PC Web, Mobile WAP, Face-to-Face, In-App payments, and Subscriptions
+ * Version: 1.1.0
  * Requires at least: 6.5
  * Requires PHP: 8.2
- * Author: WPKJ Team
+ * Author: WPDAXUE.COM
  * Author URI: https://www.wpdaxue.com
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -16,7 +16,7 @@
 
 defined('ABSPATH') || exit;
 
-define('WPKJ_FC_ALIPAY_VERSION', '1.0.9');
+define('WPKJ_FC_ALIPAY_VERSION', '1.1.0');
 define('WPKJ_FC_ALIPAY_FILE', __FILE__);
 define('WPKJ_FC_ALIPAY_PATH', plugin_dir_path(__FILE__));
 define('WPKJ_FC_ALIPAY_URL', plugin_dir_url(__FILE__));
@@ -30,7 +30,7 @@ function wpkj_fc_alipay_check_dependencies() {
         add_action('admin_notices', function() {
             ?>
             <div class="notice notice-error">
-                <p><?php echo esc_html__('WPKJ Alipay Gateway for FluentCart requires FluentCart to be installed and activated.', 'wpkj-alipay-gateway-for-fluentcart'); ?></p>
+                <p><?php echo esc_html__('WPKJ Payment Gateway for FluentCart with Alipay requires FluentCart to be installed and activated.', 'wpkj-alipay-gateway-for-fluentcart'); ?></p>
             </div>
             <?php
         });
@@ -42,7 +42,7 @@ function wpkj_fc_alipay_check_dependencies() {
         add_action('admin_notices', function() {
             ?>
             <div class="notice notice-error">
-                <p><?php echo esc_html__('WPKJ Alipay Gateway for FluentCart requires FluentCart version 1.2.0 or higher.', 'wpkj-alipay-gateway-for-fluentcart'); ?></p>
+                <p><?php echo esc_html__('WPKJ Payment Gateway for FluentCart with Alipay requires FluentCart version 1.2.0 or higher.', 'wpkj-alipay-gateway-for-fluentcart'); ?></p>
             </div>
             <?php
         });
@@ -51,22 +51,6 @@ function wpkj_fc_alipay_check_dependencies() {
     
     return true;
 }
-
-/**
- * Load plugin textdomain
- * 
- * Note: When hosted on WordPress.org, load_plugin_textdomain() is no longer required
- * as WordPress automatically loads translations. However, we keep it for compatibility
- * with manual installations and custom translation workflows.
- */
-function wpkj_fc_alipay_load_textdomain() {
-    load_plugin_textdomain( // phpcs:ignore PluginCheck.CodeAnalysis.DiscouragedFunctions -- Required for manual installations
-        'wpkj-alipay-gateway-for-fluentcart',
-        false,
-        dirname(plugin_basename(__FILE__)) . '/languages/'
-    );
-}
-add_action('init', 'wpkj_fc_alipay_load_textdomain');
 
 /**
  * Initialize autoloader
@@ -137,7 +121,7 @@ function wpkj_fc_alipay_activate() {
     if (!wpkj_fc_alipay_check_dependencies()) {
         deactivate_plugins(plugin_basename(__FILE__));
         wp_die(
-            esc_html__('WPKJ Alipay Gateway for FluentCart requires FluentCart to be installed and activated.', 'wpkj-alipay-gateway-for-fluentcart'),
+            esc_html__('WPKJ Payment Gateway for FluentCart with Alipay requires FluentCart to be installed and activated.', 'wpkj-alipay-gateway-for-fluentcart'),
             esc_html__('Plugin Activation Error', 'wpkj-alipay-gateway-for-fluentcart'),
             array('back_link' => true)
         );

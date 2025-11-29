@@ -1,11 +1,11 @@
-=== WPKJ Alipay Gateway for FluentCart ===
-Contributors: cmhello
+=== WPKJ Payment Gateway for FluentCart with Alipay ===
+Contributors: wpdaxue, cmhello
 Donate link: https://www.wpdaxue.com/wpkj-alipay-gateway-for-fluentcart.html
 Tags: fluentcart, alipay, payment gateway, china payment
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.2
-Stable tag: 1.0.9
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -13,7 +13,7 @@ Professional Alipay payment gateway for FluentCart with multi-platform support, 
 
 == Description ==
 
-WPKJ Alipay Gateway for FluentCart is a feature-rich, enterprise-grade payment gateway that seamlessly integrates Alipay with FluentCart. It intelligently detects user environments and automatically selects the optimal payment interface for the best user experience.
+WPKJ Payment Gateway for FluentCart with Alipay is a feature-rich, enterprise-grade payment gateway that seamlessly integrates Alipay with FluentCart. It intelligently detects user environments and automatically selects the optimal payment interface.
 
 = Key Features =
 
@@ -76,7 +76,7 @@ CNY (Chinese Yuan), USD, EUR, GBP, HKD, JPY, KRW, SGD, AUD, CAD, CHF, NZD, THB, 
 
 1. Log in to your WordPress admin panel
 2. Navigate to Plugins > Add New
-3. Search for "WPKJ Alipay Gateway for FluentCart"
+3. Search for "WPKJ Payment Gateway for FluentCart with Alipay"
 4. Click "Install Now" and then "Activate"
 5. Go to FluentCart > Settings > Payment Methods
 6. Configure your Alipay credentials
@@ -159,7 +159,7 @@ Yes! The plugin provides numerous hooks and filters for customization:
 
 = Does it work on mobile devices? =
 
-Yes! The plugin automatically detects mobile devices and uses Alipay's mobile WAP payment interface for the best mobile experience.
+Yes! The plugin automatically detects mobile devices and uses Alipay's mobile WAP payment interface for mobile experience.
 
 = What about Face-to-Face payments? =
 
@@ -174,6 +174,17 @@ Enable QR code payments in settings. Customers can scan QR codes with their Alip
 5. Payment receipt
 
 == Changelog ==
+
+= 1.1.0 =
+Release Date: November 29, 2025
+
+* Update: Plugin name changed to "WPKJ Payment Gateway for FluentCart with Alipay"
+* Update: Plugin author and copyright information updated to WPDAXUE.COM
+* Update: All brand and link information adjusted in README and documentation
+* Update: Version number synchronized to 1.1.0 with changelog
+* Improvement: Plugin activation and dependency check prompt text corrected
+* Improvement: Redundant code removed from text fields to simplify logic
+* Update: Project name and author fields updated in language files
 
 = 1.0.9 =
 Release Date: November 12, 2025
@@ -350,7 +361,7 @@ Important update for subscription users. Adds automatic subscription cancellatio
 Adds Face-to-Face QR payment and fixes encoding issues. Recommended for merchants in China.
 
 = 1.0.0 =
-Initial release of WPKJ Alipay Gateway for FluentCart.
+Initial release of WPKJ Payment Gateway for FluentCart with Alipay.
 
 == Support and Documentation ==
 
@@ -358,7 +369,7 @@ For comprehensive documentation, tutorials, and support:
 
 * **Official Website**: [https://www.wpdaxue.com](https://www.wpdaxue.com)
 * **Documentation**: [https://www.wpdaxue.com/wpkj-alipay-gateway-for-fluentcart.html](https://www.wpdaxue.com/wpkj-alipay-gateway-for-fluentcart.html)
-* **Support Email**: support@wwpdaxue.com
+* **Support Email**: support@wpdaxue.com
 * **GitHub**: Report issues and contribute
 
 == Privacy and Data ==
@@ -405,7 +416,7 @@ Users are informed about Alipay payment processing when they select Alipay as th
 
 == Credits ==
 
-* Developed by: cmhello
+* Developed by: WPDAXUE.COM
 * Contributors: WordPress community
 * Framework: FluentCart Payment Gateway API
-* Special Thanks: FluentCart team for excellent payment framework
+* Special Thanks: FluentCart team for excellent payment framework, and Alipay for their robust payment solution
