@@ -40,7 +40,27 @@ class PaymentStatusChecker
     public function __construct()
     {
         $this->settings = new AlipaySettingsBase();
-        $this->api = new AlipayAPI($this->settings);
+        // Delay API initialization until actually needed
+    }
+
+    /**
+     * Get API instance (lazy loading)
+     * 
+     * @return AlipayAPI|null
+     */
+    private function getAPI()
+    {
+        if ($this->api === null) {
+            try {
+                $this->api = new AlipayAPI($this->settings);
+            } catch (\Exception $e) {
+                Logger::error('Failed to initialize Alipay API', [
+                    'error' => $e->getMessage()
+                ]);
+                return null;
+            }
+        }
+        return $this->api;
     }
 
     /**
@@ -128,7 +148,15 @@ class PaymentStatusChecker
                 $outTradeNo = str_replace('-', '', $transaction->uuid);
             }
             
-            $result = $this->api->queryTrade($outTradeNo);
+            $api = $this->getAPI();
+            if (!$api) {
+                wp_send_json_error([
+                    'message' => __('Payment gateway not configured', 'wpkj-alipay-gateway-for-fluentcart')
+                ]);
+                return;
+            }
+            
+            $result = $api->queryTrade($outTradeNo);
 
             if (is_wp_error($result)) {
                 wp_send_json_success([

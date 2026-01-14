@@ -37,7 +37,27 @@ class RefundProcessor
     public function __construct()
     {
         $this->settings = new AlipaySettingsBase();
-        $this->api = new AlipayAPI($this->settings);
+        // Delay API initialization until actually needed
+    }
+
+    /**
+     * Get API instance (lazy loading)
+     * 
+     * @return AlipayAPI|null
+     */
+    private function getAPI()
+    {
+        if ($this->api === null) {
+            try {
+                $this->api = new AlipayAPI($this->settings);
+            } catch (\Exception $e) {
+                Logger::error('Failed to initialize Alipay API', [
+                    'error' => $e->getMessage()
+                ]);
+                return null;
+            }
+        }
+        return $this->api;
     }
 
     /**
