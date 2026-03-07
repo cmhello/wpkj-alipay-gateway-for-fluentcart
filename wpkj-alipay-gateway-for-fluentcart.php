@@ -3,7 +3,7 @@
  * Plugin Name: WPKJ Payment Gateway for FluentCart with Alipay
  * Plugin URI: https://www.wpdaxue.com/wpkj-alipay-gateway-for-fluentcart.html
  * Description: Payment gateway integration for FluentCart with Alipay - Support PC Web, Mobile WAP, Face-to-Face, In-App payments, and Subscriptions
- * Version: 1.1.0
+ * Version: 1.1.1
  * Requires at least: 6.5
  * Requires PHP: 8.2
  * Author: WPDAXUE.COM
@@ -16,7 +16,7 @@
 
 defined('ABSPATH') || exit;
 
-define('WPKJ_FC_ALIPAY_VERSION', '1.1.0');
+define('WPKJ_FC_ALIPAY_VERSION', '1.1.1');
 define('WPKJ_FC_ALIPAY_FILE', __FILE__);
 define('WPKJ_FC_ALIPAY_PATH', plugin_dir_path(__FILE__));
 define('WPKJ_FC_ALIPAY_URL', plugin_dir_url(__FILE__));
@@ -99,9 +99,25 @@ function wpkj_fc_alipay_bootstrap() {
         $f2fPageHandler = new \WPKJFluentCart\Alipay\Processor\FaceToFacePageHandler();
         $f2fPageHandler->register();
         
+        // Register subscription reactivation / manual-renewal handler
+        // Handles: /?fluent-cart=reactivate-subscription&subscription_hash={uuid}&method=alipay
+        $alipaySettings = new \WPKJFluentCart\Alipay\Gateway\AlipaySettingsBase();
+
+        // Register the renewal checkout page (payment-method selector, priority 5, fallback).
+        // Also registers Alipay as an available renewal payment method via filter.
+        $renewalCheckoutPage = new \WPKJFluentCart\Alipay\Subscription\RenewalCheckoutPage($alipaySettings);
+        $renewalCheckoutPage->register();
+
+        $reactivationHandler = new \WPKJFluentCart\Alipay\Subscription\SubscriptionReactivationHandler($alipaySettings);
+        $reactivationHandler->register();
+        
         // Register order cancel listener (for subscription cancellation sync)
         $orderCancelListener = new \WPKJFluentCart\Alipay\Listeners\OrderCancelListener();
         $orderCancelListener->register();
+
+        // Register daily renewal-reminder cron (skipped when WAAS is active via filter).
+        $renewalReminder = new \WPKJFluentCart\Alipay\Subscription\SubscriptionRenewalReminderService();
+        $renewalReminder->register();
         
         // Initialize subscription renewal retry mechanism
         \WPKJFluentCart\Alipay\Subscription\SubscriptionRenewer::init();

@@ -3,9 +3,9 @@ Contributors: wpdaxue, cmhello
 Donate link: https://www.wpdaxue.com/wpkj-alipay-gateway-for-fluentcart.html
 Tags: fluentcart, alipay, payment gateway, china payment
 Requires at least: 6.5
-Tested up to: 6.8
+Tested up to: 6.9
 Requires PHP: 8.2
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -174,6 +174,16 @@ Enable QR code payments in settings. Customers can scan QR codes with their Alip
 5. Payment receipt
 
 == Changelog ==
+
+= 1.1.1 =
+Release Date: January 23, 2026
+
+* Performance: Refactored payment status checker and refund processor to use lazy initialization for Alipay API instances
+* Performance: Improved resource usage by deferring API initialization until actually needed
+* Security: Enhanced error handling with proper exception catching and logging during API initialization
+* Improvement: Added getAPI() method to gracefully handle API initialization failures
+* Improvement: Better error response when API instance is unavailable during payment status queries
+* Improvement: Enhanced exception safety in PaymentStatusChecker and RefundProcessor classes
 
 = 1.1.0 =
 Release Date: November 29, 2025
