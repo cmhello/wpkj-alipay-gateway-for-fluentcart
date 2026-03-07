@@ -93,6 +93,7 @@ class SubscriptionRenewalReminderService
 
         try {
             $this->sendReminders();
+            $this->sendTrialExpiredReminders();
         } catch (\Exception $e) {
             Logger::error('Alipay renewal reminder cron exception', [
                 'error' => $e->getMessage(),
@@ -125,15 +126,15 @@ class SubscriptionRenewalReminderService
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $rows = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT s.id, s.uuid, s.customer_id, s.item_name, s.next_payment_date,
-                        c.user_id
+                "SELECT s.id, s.uuid, s.customer_id, s.item_name, s.next_billing_date,
+                        s.status, c.user_id
                  FROM {$fcSubs} s
                  JOIN {$fcOrders} o ON o.id = s.parent_order_id
                  LEFT JOIN {$wpdb->prefix}fct_customers c ON c.id = s.customer_id
                  WHERE o.payment_method = 'alipay'
                    AND s.status IN ('active', 'trialing', 'expiring')
-                   AND s.next_payment_date > %s
-                   AND s.next_payment_date <= %s",
+                   AND s.next_billing_date > %s
+                   AND s.next_billing_date <= %s",
                 $lower,
                 $upper
             ),
@@ -149,17 +150,68 @@ class SubscriptionRenewalReminderService
         Logger::info('Alipay renewal reminder: found subscriptions', ['count' => count($rows)]);
 
         foreach ($rows as $row) {
-            $this->sendReminderEmail($row);
+            $type = ($row['status'] === 'trialing') ? 'trial_ending' : 'renewal_due';
+            $this->sendReminderEmail($row, $type);
+        }
+    }
+
+    /**
+     * Query FluentCart Alipay subscriptions in 'trialing' status whose trial just ended
+     * (next_billing_date in the past 24 hours) and send a trial-expired reminder.
+     *
+     * Uses a 24-hour window so the email fires only once per trial expiry,
+     * avoiding repeated notifications during the FC grace period.
+     *
+     * @return void
+     */
+    private function sendTrialExpiredReminders(): void
+    {
+        global $wpdb;
+
+        $fcSubs   = $wpdb->prefix . 'fct_subscriptions';
+        $fcOrders = $wpdb->prefix . 'fct_orders';
+
+        $lower = gmdate('Y-m-d H:i:s', time() - DAY_IN_SECONDS);
+        $upper = gmdate('Y-m-d H:i:s', time());
+
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT s.id, s.uuid, s.customer_id, s.item_name, s.next_billing_date,
+                        s.status, c.user_id
+                 FROM {$fcSubs} s
+                 JOIN {$fcOrders} o ON o.id = s.parent_order_id
+                 LEFT JOIN {$wpdb->prefix}fct_customers c ON c.id = s.customer_id
+                 WHERE o.payment_method = 'alipay'
+                   AND s.status = 'trialing'
+                   AND s.next_billing_date >= %s
+                   AND s.next_billing_date < %s",
+                $lower,
+                $upper
+            ),
+            ARRAY_A
+        );
+        // phpcs:enable
+
+        if (empty($rows)) {
+            return;
+        }
+
+        Logger::info('Alipay trial expired reminder: found subscriptions', ['count' => count($rows)]);
+
+        foreach ($rows as $row) {
+            $this->sendReminderEmail($row, 'trial_expired');
         }
     }
 
     /**
      * Send a single renewal-reminder email.
      *
-     * @param array $row  Row from the database query.
+     * @param array  $row  Row from the database query.
+     * @param string $type Email type: 'renewal_due' | 'trial_ending' | 'trial_expired'.
      * @return void
      */
-    private function sendReminderEmail(array $row): void
+    private function sendReminderEmail(array $row, string $type = 'renewal_due'): void
     {
         $userId = (int) ($row['user_id'] ?? 0);
         if (!$userId) {
@@ -175,8 +227,8 @@ class SubscriptionRenewalReminderService
         }
 
         $subscriptionUuid = $row['uuid'] ?? '';
-        $subscriptionName = $row['item_name'] ?? __('您的订阅', 'wpkj-alipay-gateway-for-fluentcart');
-        $expiryDate       = $row['next_payment_date'] ?? '';
+        $subscriptionName = $row['item_name'] ?? __('Your subscription', 'wpkj-alipay-gateway-for-fluentcart');
+        $expiryDate       = $row['next_billing_date'] ?? '';
         $formattedExpiry  = $expiryDate
             ? date_i18n(get_option('date_format'), strtotime($expiryDate))
             : '';
@@ -192,13 +244,31 @@ class SubscriptionRenewalReminderService
         $siteName  = get_bloginfo('name');
         $userEmail = $user->user_email;
 
-        /* translators: %s: site name */
-        $subject = sprintf(
-            __('[%s] 您的订阅即将到期，请续费', 'wpkj-alipay-gateway-for-fluentcart'),
-            $siteName
-        );
+        switch ($type) {
+            case 'trial_ending':
+                /* translators: %s: site name */
+                $subject = sprintf(
+                    __('[%s] Your trial ends soon – please pay to continue', 'wpkj-alipay-gateway-for-fluentcart'),
+                    $siteName
+                );
+                break;
+            case 'trial_expired':
+                /* translators: %s: site name */
+                $subject = sprintf(
+                    __('[%s] Your trial has ended – pay now to keep your service', 'wpkj-alipay-gateway-for-fluentcart'),
+                    $siteName
+                );
+                break;
+            default:
+                /* translators: %s: site name */
+                $subject = sprintf(
+                    __('[%s] Your subscription is expiring – please renew', 'wpkj-alipay-gateway-for-fluentcart'),
+                    $siteName
+                );
+        }
 
         $body = $this->buildEmailBody([
+            'type'              => $type,
             'user_name'         => $user->display_name,
             'subscription_name' => $subscriptionName,
             'expiry_date'       => $formattedExpiry,
@@ -214,6 +284,7 @@ class SubscriptionRenewalReminderService
             'subscription_id' => $row['id'] ?? 0,
             'user_id'         => $userId,
             'email'           => $userEmail,
+            'type'            => $type,
             'sent'            => $sent,
         ]);
     }
@@ -221,22 +292,41 @@ class SubscriptionRenewalReminderService
     /**
      * Build the HTML email body.
      *
-     * @param array{user_name:string,subscription_name:string,expiry_date:string,renew_url:string,site_name:string} $data
+     * @param array{type:string,user_name:string,subscription_name:string,expiry_date:string,renew_url:string,site_name:string} $data
      * @return string
      */
     private function buildEmailBody(array $data): string
     {
+        $type             = $data['type'] ?? 'renewal_due';
         $userName         = esc_html($data['user_name']);
         $subscriptionName = esc_html($data['subscription_name']);
         $expiryDate       = esc_html($data['expiry_date']);
         $renewUrl         = esc_url($data['renew_url']);
         $siteName         = esc_html($data['site_name']);
 
-        $btnLabel  = esc_html__('立即续费', 'wpkj-alipay-gateway-for-fluentcart');
-        $noteLabel = esc_html__('如您已完成续费，请忽略此邮件。', 'wpkj-alipay-gateway-for-fluentcart');
+        switch ($type) {
+            case 'trial_ending':
+                $bodyLine  = esc_html__('Your trial for the subscription below will expire soon. Please pay before the trial ends to continue using the service.', 'wpkj-alipay-gateway-for-fluentcart');
+                $btnColor  = '#1677ff';
+                $btnLabel  = esc_html__('Pay Now to Continue', 'wpkj-alipay-gateway-for-fluentcart');
+                $noteLabel = esc_html__('If you have already paid, please ignore this email.', 'wpkj-alipay-gateway-for-fluentcart');
+                break;
+            case 'trial_expired':
+                $bodyLine  = esc_html__('Your trial has ended. Please complete payment within the grace period to keep your service running.', 'wpkj-alipay-gateway-for-fluentcart');
+                $btnColor  = '#e53e3e';
+                $btnLabel  = esc_html__('Pay Now – Grace Period Active', 'wpkj-alipay-gateway-for-fluentcart');
+                $noteLabel = esc_html__('Your service will be suspended once the grace period ends.', 'wpkj-alipay-gateway-for-fluentcart');
+                break;
+            default:
+                $bodyLine  = esc_html__('Your subscription below is expiring soon. Please renew to avoid service interruption.', 'wpkj-alipay-gateway-for-fluentcart');
+                $btnColor  = '#1677ff';
+                $btnLabel  = esc_html__('Renew Now', 'wpkj-alipay-gateway-for-fluentcart');
+                $noteLabel = esc_html__('If you have already renewed, please ignore this email.', 'wpkj-alipay-gateway-for-fluentcart');
+        }
+
         $expiryText = $expiryDate
             /* translators: %s: expiry date */
-            ? sprintf(esc_html__('到期日期：%s', 'wpkj-alipay-gateway-for-fluentcart'), $expiryDate)
+            ? '<p style="margin:8px 0 0;font-size:14px;color:#64748b;">' . sprintf(esc_html__('Date: %s', 'wpkj-alipay-gateway-for-fluentcart'), $expiryDate) . '</p>'
             : '';
 
         return <<<HTML
@@ -255,14 +345,13 @@ class SubscriptionRenewalReminderService
   <tr><td style="background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.08);overflow:hidden;">
     <table width="100%" cellpadding="0" cellspacing="0">
       <tr><td style="padding:32px 32px 24px;border-bottom:1px solid #f1f5f9;">
-        <p style="margin:0 0 16px;font-size:16px;color:#1e293b;">您好，{$userName}</p>
-        <p style="margin:0;font-size:15px;color:#475569;line-height:1.6;">
-          您的订阅 <strong style="color:#1e293b;">{$subscriptionName}</strong> 即将到期。
-          {$expiryText}
-        </p>
+        <p style="margin:0 0 12px;font-size:16px;color:#1e293b;">Hi, {$userName}</p>
+        <p style="margin:0;font-size:15px;color:#475569;line-height:1.6;">{$bodyLine}</p>
+        <p style="margin:12px 0 0;font-size:15px;font-weight:600;color:#1e293b;">{$subscriptionName}</p>
+        {$expiryText}
       </td></tr>
       <tr><td style="padding:28px 32px 32px;text-align:center;">
-        <a href="{$renewUrl}" style="display:inline-block;padding:13px 36px;background:#1677ff;color:#fff;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;">{$btnLabel}</a>
+        <a href="{$renewUrl}" style="display:inline-block;padding:13px 36px;background:{$btnColor};color:#fff;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;">{$btnLabel}</a>
         <p style="margin:20px 0 0;font-size:12px;color:#94a3b8;">{$noteLabel}</p>
       </td></tr>
     </table>

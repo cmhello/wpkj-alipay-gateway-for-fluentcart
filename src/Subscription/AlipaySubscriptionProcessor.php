@@ -348,8 +348,8 @@ class AlipaySubscriptionProcessor
             return $this->processFaceToFacePayment($params, $paymentInstance);
         }
 
-        // Standard PC web payment
-        $result = $this->api->createPagePayment($params);
+        // Standard PC web payment – use createPayment() which auto-detects PC/WAP
+        $result = $this->api->createPayment($params);
 
         if (is_wp_error($result)) {
             return $result;
@@ -364,7 +364,7 @@ class AlipaySubscriptionProcessor
             'status' => 'processing',
             'nextAction' => 'redirect',
             'actionName' => 'browser_redirect',
-            'redirect_url' => $result['redirect_url'],
+            'redirect_url' => $result['payment_url'],
             'message' => __('Redirecting to Alipay...', 'wpkj-alipay-gateway-for-fluentcart')
         ];
     }
@@ -378,7 +378,8 @@ class AlipaySubscriptionProcessor
      */
     private function processMobilePayment($params, PaymentInstance $paymentInstance)
     {
-        $result = $this->api->createWapPayment($params);
+        // Use createPayment() which auto-detects PC/WAP via ClientDetector
+        $result = $this->api->createPayment($params);
 
         if (is_wp_error($result)) {
             return $result;
@@ -393,7 +394,7 @@ class AlipaySubscriptionProcessor
             'status' => 'processing',
             'nextAction' => 'redirect',
             'actionName' => 'browser_redirect',
-            'redirect_url' => $result['redirect_url'],
+            'redirect_url' => $result['payment_url'],
             'message' => __('Redirecting to Alipay...', 'wpkj-alipay-gateway-for-fluentcart')
         ];
     }
@@ -597,6 +598,25 @@ class AlipaySubscriptionProcessor
             'order_type' => $order->type,
             'amount' => $paymentAmount
         ]);
+
+        // Free trial with no initial charge (signup_fee = 0, trial_days > 0):
+        // Do NOT call Alipay with a zero amount – Alipay rejects it with
+        // ACQ.TOTAL_FEE_EXCEED_THE_LIMT ("order amount out of range").
+        // Return success immediately so FluentCart activates the subscription
+        // in trialing status and sets the next_billing_date automatically.
+        if ($paymentAmount <= 0 && $order->type !== 'renewal') {
+            Logger::info('Free Trial Subscription – No Initial Payment Required', [
+                'subscription_id' => $subscription->id,
+                'trial_days'      => $subscription->trial_days,
+                'signup_fee'      => $subscription->signup_fee,
+            ]);
+
+            return [
+                'status'     => 'success',
+                'nextAction' => 'none',
+                'message'    => __('Free trial activated. No initial payment required.', 'wpkj-alipay-gateway-for-fluentcart'),
+            ];
+        }
 
         // Generate vendor subscription ID (for local tracking)
         if (empty($subscription->vendor_subscription_id)) {

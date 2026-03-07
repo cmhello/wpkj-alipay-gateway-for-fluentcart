@@ -238,7 +238,7 @@ class RenewalCheckoutPage
         // Status badge config.
         $statusConfig = [
             Status::SUBSCRIPTION_ACTIVE    => ['🟢', __('续费订阅', 'wpkj-alipay-gateway-for-fluentcart')],
-            Status::SUBSCRIPTION_TRIALING  => ['🟢', __('续费订阅', 'wpkj-alipay-gateway-for-fluentcart')],
+            Status::SUBSCRIPTION_TRIALING  => ['🟡', __('Trial ending – pay now to continue', 'wpkj-alipay-gateway-for-fluentcart')],
             Status::SUBSCRIPTION_EXPIRED   => ['🔴', __('订阅已过期，续费后立即恢复服务', 'wpkj-alipay-gateway-for-fluentcart')],
             Status::SUBSCRIPTION_CANCELED  => ['⚪', __('订阅已取消，续费可重新激活', 'wpkj-alipay-gateway-for-fluentcart')],
             Status::SUBSCRIPTION_PAUSED    => ['🟡', __('订阅已暂停，续费即可恢复', 'wpkj-alipay-gateway-for-fluentcart')],
