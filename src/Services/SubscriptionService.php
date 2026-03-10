@@ -116,6 +116,13 @@ class SubscriptionService
                 'status' => $subscription->status,
                 'source' => $source
             ]);
+
+            // Fire WAAS integration hook for renewal.
+            // IMPORTANT: WAAS FluentCart_Integration listens to 'fluentcart/subscription_renewed'
+            // (no underscore between "fluent" and "cart"). Alipay bypasses FluentCart's
+            // Stripe/PayPal-only events, so we must manually fire the WAAS hook here.
+            do_action( 'fluentcart/subscription_renewed', $subscription );
+
         } else {
             // For initial subscription payment: use syncSubscriptionStates to set bill_count
             $updateArgs = [
@@ -137,6 +144,14 @@ class SubscriptionService
                 'billing_interval' => $subscription->billing_interval,
                 'source' => $source
             ]);
+
+            // Fire WAAS integration hook for initial subscription activation.
+            // IMPORTANT: WAAS FluentCart_Integration listens to 'fluentcart/subscription_activated'
+            // (no underscore between "fluent" and "cart"), while FluentCart's own SubscriptionActivated
+            // event fires 'fluent_cart/subscription_activated' (with underscore). They are different hooks.
+            // Alipay bypasses FluentCart's Stripe/PayPal-only SubscriptionActivated event entirely,
+            // so we must manually fire the WAAS hook here to create the WAAS subscription record.
+            do_action( 'fluentcart/subscription_activated', $subscription, $order );
         }
 
         return true;

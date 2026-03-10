@@ -200,8 +200,16 @@ class NotifyHandler
                 'transaction_uuid' => $transaction->uuid,
                 'trade_no' => $data['trade_no'] ?? ''
             ]);
-            
-            SubscriptionService::handleSubscriptionPaymentSuccess($transaction, $data, 'webhook');
+
+            // IMPORTANT: Mark the transaction as SUCCEEDED first (via confirmPaymentSuccess),
+            // so that syncSubscriptionStates() counts this transaction in bill_count correctly.
+            // Without this, bill_count stays 0 and order status is never updated to processing.
+            // This mirrors what the WeChat NotifyHandler does explicitly.
+            $this->processor->confirmPaymentSuccess($transaction, $data);
+
+            // Reload transaction after saving
+            $freshTransaction = $transaction->fresh();
+            SubscriptionService::handleSubscriptionPaymentSuccess($freshTransaction, $data, 'webhook');
         } else {
             // Regular payment processing
             $this->processor->confirmPaymentSuccess($transaction, $data);

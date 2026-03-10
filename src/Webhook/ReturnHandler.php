@@ -8,6 +8,7 @@ use FluentCart\App\Helpers\Status;
 use WPKJFluentCart\Alipay\API\AlipayAPI;
 use WPKJFluentCart\Alipay\Gateway\AlipaySettingsBase;
 use WPKJFluentCart\Alipay\Processor\PaymentProcessor;
+use WPKJFluentCart\Alipay\Services\SubscriptionService;
 use WPKJFluentCart\Alipay\Utils\Helper;
 use WPKJFluentCart\Alipay\Utils\Logger;
 
@@ -156,6 +157,17 @@ class ReturnHandler
                     
                     // Payment successful, update order
                     $this->processor->confirmPaymentSuccess($transaction, $result);
+
+                    // For subscription transactions, also activate the subscription.
+                    // confirmPaymentSuccess() only handles order/transaction status — it does NOT
+                    // call syncSubscriptionStates() or fire the WAAS hook.  We must do that here
+                    // so the WAAS subscription record is created regardless of whether the async
+                    // notify arrives before or after this return_handler call.
+                    if (SubscriptionService::isSubscriptionTransaction($transaction)) {
+                        // Reload to get the latest saved state (confirmPaymentSuccess saved it)
+                        $freshTransaction = $transaction->fresh();
+                        SubscriptionService::handleSubscriptionPaymentSuccess($freshTransaction, $result, 'return_handler');
+                    }
                     break;
 
                 case 'WAIT_BUYER_PAY':
