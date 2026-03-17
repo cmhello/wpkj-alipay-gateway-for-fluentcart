@@ -468,7 +468,15 @@ class PaymentProcessor
 
         // Sync order statuses
         (new StatusHelper($order))->syncOrderStatuses($transaction);
-        
+
+        // Generate receipt_number / invoice_no if not yet set.
+        // Renewal orders are created with payment_status=PAYMENT_PENDING, so FluentCart's
+        // Order::boot() creating-event skips generating these numbers at order creation time.
+        // syncOrderStatuses() calls $order->save() via the updating event (not creating),
+        // so they are still empty after payment confirmation. We must call generateReceiptNumber()
+        // explicitly here. The method is idempotent: it returns early if receipt_number exists.
+        $order->generateReceiptNumber();
+
         // CRITICAL FIX: Clear cart's order_id to allow repeat purchases
         // Using centralized OrderService for DRY principle
         OrderService::clearCartOrderAssociation($order, 'payment_confirmation');
