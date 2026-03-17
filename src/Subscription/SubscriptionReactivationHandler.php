@@ -319,21 +319,30 @@ class SubscriptionReactivationHandler
         $taxTotal      = (int) ($subscription->recurring_tax_total ?? 0);
         $subtotal      = $renewalAmount - $taxTotal;
 
+        // Determine fulfillment type from the parent subscription order item so that
+        // StatusHelper::syncOrderStatuses() can auto-complete digital orders after payment.
+        $parentOrderItem = OrderItem::query()
+            ->where('order_id', $parentOrder->id)
+            ->where('payment_type', Status::ORDER_TYPE_SUBSCRIPTION)
+            ->first();
+        $fulfillmentType = $parentOrderItem ? $parentOrderItem->fulfillment_type : 'digital';
+
         $orderData = [
-            'parent_id'      => $parentOrder->id,
-            'customer_id'    => $subscription->customer_id,
-            'type'           => Status::ORDER_TYPE_RENEWAL,
-            'status'         => Status::ORDER_ON_HOLD,
-            'payment_status' => Status::PAYMENT_PENDING,
-            'payment_method' => 'alipay',
-            'currency'       => $parentOrder->currency,
-            'tax_behavior'   => $parentOrder->tax_behavior,
-            'subtotal'       => $subtotal,
-            'tax_total'      => $taxTotal,
-            'total_amount'   => $renewalAmount,
-            'total_paid'     => 0,
-            'mode'           => $parentOrder->mode,
-            'config'         => [],
+            'parent_id'        => $parentOrder->id,
+            'customer_id'      => $subscription->customer_id,
+            'type'             => Status::ORDER_TYPE_RENEWAL,
+            'status'           => Status::ORDER_ON_HOLD,
+            'payment_status'   => Status::PAYMENT_PENDING,
+            'payment_method'   => 'alipay',
+            'currency'         => $parentOrder->currency,
+            'tax_behavior'     => $parentOrder->tax_behavior,
+            'subtotal'         => $subtotal,
+            'tax_total'        => $taxTotal,
+            'total_amount'     => $renewalAmount,
+            'total_paid'       => 0,
+            'mode'             => $parentOrder->mode,
+            'fulfillment_type' => $fulfillmentType,
+            'config'           => [],
         ];
 
         $renewalOrder = Order::query()->create($orderData);
@@ -424,7 +433,10 @@ class SubscriptionReactivationHandler
             'status'           => Status::TRANSACTION_PENDING,
             'currency'         => $renewalOrder->currency,
             'total'            => $renewalOrder->total_amount,
-            'meta'             => [],
+            'meta'             => [
+                'is_subscription' => true,
+                'subscription_id' => $subscription->id,
+            ],
         ]);
 
         if (!$transaction) {

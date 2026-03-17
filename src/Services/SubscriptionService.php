@@ -6,6 +6,7 @@ use FluentCart\App\Helpers\Status;
 use FluentCart\App\Models\OrderTransaction;
 use FluentCart\App\Models\Subscription;
 use FluentCart\App\Modules\Subscriptions\Services\SubscriptionService as FluentCartSubscriptionService;
+use FluentCart\App\Services\Payments\PaymentHelper;
 use WPKJFluentCart\Alipay\Utils\Logger;
 
 /**
@@ -167,12 +168,19 @@ class SubscriptionService
      */
     private static function calculateNextBillingDate($subscription)
     {
-        // Use FluentCart's built-in method which handles:
-        // - Trial period calculation
-        // - Interval-based date calculation
-        // - Last order date tracking
-        // - Edge cases and timezone handling
-        return $subscription->guessNextBillingDate(true);
+        // When next_billing_date is already set, advance it by exactly one billing interval.
+        // guessNextBillingDate(true) bases the calculation on renewal_order.created_at + interval,
+        // which gives the wrong result when the user renews before the actual billing date.
+        // Example: next_billing_date = 2027-03-17, user renews on 2026-03-17 (early/test renewal).
+        //   guessNextBillingDate: 2026-03-17 + 1 year = 2027-03-17  ← incorrect (no advance)
+        //   Correct result:       2027-03-17 + 1 year = 2028-03-17  ✓
+        if ( $subscription->next_billing_date ) {
+            $days = PaymentHelper::getIntervalDays( $subscription->billing_interval );
+            return gmdate( 'Y-m-d H:i:s', strtotime( $subscription->next_billing_date ) + $days * DAY_IN_SECONDS );
+        }
+
+        // Fallback for first-time activation (no existing next_billing_date).
+        return $subscription->guessNextBillingDate( true );
     }
 
     /**
